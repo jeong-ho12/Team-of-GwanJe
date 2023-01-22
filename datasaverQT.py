@@ -6,8 +6,8 @@ from datasaver import DataSaver
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.event_loop_running = False
-        self.data_saver = DataSaver("data.csv", 10)
+
+        self.data_saver = DataSaver("data.csv", 5)
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.add_button = QPushButton("Add Data")
@@ -39,25 +39,39 @@ class MainWindow(QMainWindow):
 
     def start(self):
         filename = self.file_name_edit.text()
-        if filename and not os.path.isfile(filename):
-            self.data_saver.file_name = filename
-            self.data_saver.start()
-            self.start_button.setEnabled(False)
-            self.stop_button.setEnabled(True)
-            self.add_button.setEnabled(True)
-        else:
-            if not filename:
-                QMessageBox.warning(self, "Warning", "Please Enter a file name.")
-            else:
-                QMessageBox.warning(self, "Warning", "File already exist, please enter different name")
+        try:
+            if filename and not os.path.isfile(filename):
+                self.data_saver.file_name = filename
 
+                self.data_saver.start()
+                self.file_name_edit.setEnabled(False)
+                self.start_button.setEnabled(False)
+                self.stop_button.setEnabled(True)
+                self.add_button.setEnabled(True)
+            else:
+                if not filename:
+                    QMessageBox.warning(self, "Warning", "Please Enter a file name.")
+                else:
+                    QMessageBox.warning(self, "Warning", "File already exist, please enter different name")
+        
+        except FileNotFoundError:
+            QMessageBox.warning(self, "Warning", "File not found, please enter a valid file name.")
+        except PermissionError:
+            QMessageBox.warning(self, "Warning", "Permission Denied, Unable to write to the file.")
+        except IOError:
+            QMessageBox.warning(self, "Warning", "File already open, please close it before opening a new one.")
+        except AttributeError:
+            QMessageBox.warning(self, "Warning", "DataSaver object not initialized properly.")
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", str(e))
 
     def stop(self):
         self.data_saver.stop()
+        self.file_name_edit.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.start_button.setEnabled(True)
         self.add_button.setEnabled(False)
-        self.event_loop_running = False
+
 
     def add_data(self):
         roll = self.roll_edit.text()
