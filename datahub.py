@@ -20,16 +20,19 @@ class Datahub:
         
     def update(self,datas):
 
-        self.timespace.append(datas[0])
-        self.rolls.append(datas[1])
-        self.pitchs.append(datas[2])
-        self.yaws.append(datas[3])
-        self.rollSpeeds.append(datas[4])
-        self.pitchSpeeds.append(datas[5])
-        self.yawSpeeds.append(datas[6])
-        self.Xaccels.append(datas[7])
-        self.Yaccels.append(datas[8])
-        self.Zaccels.append(datas[9])
-        self.latitudes.append(datas[10])
-        self.longitudes.append(datas[11])
-        self.altitude.append(datas[12])
+        
+        self.timespace.append([datas[0],datas[1],datas[2],datas[3]])
+        self.rolls.append(datas[4])
+        self.pitchs.append(datas[5])
+        self.yaws.append(datas[6])
+        self.rollSpeeds.append(datas[7])
+        self.pitchSpeeds.append(datas[8])
+        self.yawSpeeds.append(datas[9])
+        self.Xaccels.append(datas[10])
+        self.Yaccels.append(datas[11])
+        self.Zaccels.append(datas[12])
+        self.latitudes.append(datas[13])
+        self.longitudes.append(datas[14])
+        self.altitude.append(datas[15])
+
+        print(self.timespace)

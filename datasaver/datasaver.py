@@ -2,7 +2,7 @@ import threading
 import csv
 from queue import Queue
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox
-
+import time
 
 class DataSaver(QMainWindow):
     def __init__(self, datahub):
@@ -23,19 +23,37 @@ class DataSaver(QMainWindow):
         while not self.stop_event.is_set():
             while not self.data_queue.empty():
                 data = self.data_queue.get()
-                self.writer.writerow(data)
+                self.writer.writerow(data[:])
                 self.counter += 1
                 if self.counter >= self.buffer_size:
                     self.counter = 0
                     self.file.flush()
+                    print(2)
+            time.sleep(0.1)
                 
     def save_data(self):
-        lineRemain = len(self.datahub.timespace) - self.saverows
-        if lineRemain > 0:
-            for i in range(lineRemain-1):
-                self.data_queue.put([self.datahub.timespace[self.saverows+i]])
-            self.saverows += lineRemain
-            print("Wait for data")
+        while True:
+            lineRemain = len(self.datahub.timespace) - self.saverows
+            if lineRemain > 0:
+                for i in range(lineRemain):
+
+                    print('write')
+                    self.data_queue.put([self.datahub.timespace[self.saverows+i],
+                                         self.datahub.rolls[self.saverows+i],
+                                         self.datahub.pitchs[self.saverows+i],
+                                         self.datahub.yaws[self.saverows+i],
+                                         self.datahub.rollSpeeds[self.saverows+i],
+                                         self.datahub.pitchSpeeds[self.saverows+i],
+                                         self.datahub.yawSpeeds[self.saverows+i],
+                                         self.datahub.Xaccels[self.saverows+i],
+                                         self.datahub.Yaccels[self.saverows+i],
+                                         self.datahub.Zaccels[self.saverows+i],
+                                         self.datahub.latitudes[self.saverows+i],
+                                         self.datahub.longitudes[self.saverows+i],
+                                         self.datahub.altitude[self.saverows+i]])
+                    
+
+                self.saverows += lineRemain
 
 
     def start(self):
