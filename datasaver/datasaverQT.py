@@ -7,7 +7,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.data_saver = DataSaver("data.csv", 5)
+        self.data_saver = DataSaver("data.csv", 1)
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.add_button = QPushButton("Add Data")
@@ -101,6 +101,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.data_saver.stop()
+        QMessageBox.warning(self, "Warning", "Program Closed.")
         event.accept()
 
 if __name__ == "__main__":

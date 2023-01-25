@@ -1,11 +1,14 @@
 import threading
 import csv
 from queue import Queue
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox
 
-class DataSaver:
-    def __init__(self, file_name:str, buffer_size:int):
-        self.file_name = file_name
-        self.buffer_size = buffer_size
+
+class DataSaver(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.file_name = 'fileName'
+        self.buffer_size = 2
         self.counter = 0
         self.file = None
         self.writer = None
@@ -20,11 +23,10 @@ class DataSaver:
                 data = self.data_queue.get()
                 self.writer.writerow(data)
                 self.counter += 1
-                # if self.counter >= self.buffer_size:
-                #     self.counter = 0
-                #     self.file.flush()
+                if self.counter >= self.buffer_size:
+                    self.counter = 0
+                    self.file.flush()
                 
-
     def save_data(self, roll:float, pitch:float, yaw:float):
         self.data_queue.put([roll, pitch, yaw])
 
@@ -34,10 +36,11 @@ class DataSaver:
             self.file = open(self.file_name, 'w', newline='')
             self.writer = csv.writer(self.file)
         else:
-            print("Previous file is still open, please close it before opening a new one.")
+            QMessageBox.warning(self, "Warning", "Previous file is still open, please close it before opening a new one.")
 
         if not self.thread.is_alive():
             self.stop_event.clear()
+        
             
 
     def stop(self):
@@ -47,4 +50,6 @@ class DataSaver:
             while not self.data_queue.empty():
                 data = self.data_queue.get()
                 self.writer.writerow(data)
-        self.file.close()
+        if self.file != None and not self.file.closed:
+            self.file.close()
+            QMessageBox.warning(self, "Warning", "File Closed.")
