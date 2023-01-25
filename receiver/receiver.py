@@ -2,12 +2,12 @@ import struct
 import serial
 import numpy as np
 import threading
+from datahub import Datahub
 
-class Receiver(threading.Thread):
-    def __init__(self,datahub):
-        super().__init__()
+class Receiver():
+    def __init__(self, myport, datahub):
 
-        self.ser = serial.Serial(port='COM4',
+        self.ser = serial.Serial(port=myport,
                     baudrate = 9600,
                     parity=serial.PARITY_NONE,
                     stopbits=serial.STOPBITS_TWO,
@@ -15,23 +15,20 @@ class Receiver(threading.Thread):
                     timeout=2)
         self.datahub = datahub
 
-    def run(self):
+    def start(self):
         while True:
-            data = self.ser.read(60)
-            if data[:4] == b'?/': #header
-                if data[4:8] == b'adsf':
-                    decodeData = struct.unpack('>13f', data[8:])
-
+            header1 = self.ser.read(4)
+            #print(header1)
+            if header1 == b'?\x80\x00\x00':
+                header2 = self.ser.read(4)
+                if header2 == b'@\x00\x00\x00':
+                    data = self.ser.read(52)
+                    decodeData = struct.unpack('>13f', data)
                     if abs(sum(decodeData[:-1])-decodeData[-1])<1:
                         alldata = np.around(decodeData[:-1],4)
-                        alldata = alldata[1:]
                         self.datahub.update(alldata)
-
-                        print(alldata)
-
-    def start():
-        pass
+                        print(self.datahub.rolls)
     
 if __name__=="__main__":
-    reciver = Receiver()
-    reciver.run()
+    reciver = Receiver(Datahub())
+    reciver.start()

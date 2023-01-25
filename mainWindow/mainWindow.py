@@ -3,7 +3,7 @@ import sys
 
 
 
-from .graphVisualizer import GraphVisualizer
+# from .graphVisualizer import GraphVisualizer
 # from .mapVisualizer import MapVisualizer
 from .widgethub import Widgethub
 
@@ -15,14 +15,14 @@ class MainWindow(QMainWindow):
         self.widgethub = Widgethub()
         self.datahub = datahub
 
-        self.graphVisualizer = GraphVisualizer(self.widgethub,datahub)
+        # self.graphVisualizer = GraphVisualizer(self.widgethub,datahub)
     
         central_widget = QWidget()
-        central_widget.setLayout(self.widgethub.graph)
+        # central_widget.setLayout(self.widgethub.graph)
         self.setCentralWidget(central_widget)
 
     def start(self):
-        self.graphVisualizer.start()
+        # self.graphVisualizer.start()
         self.show()
 
     def setEventLoop(self):
