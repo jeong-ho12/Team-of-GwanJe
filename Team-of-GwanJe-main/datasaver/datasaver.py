@@ -54,8 +54,7 @@ class DataSaver(QMainWindow):
                     
 
                 self.saverows += lineRemain
-
-
+                
     def start(self):
         # pass
         print("00000")

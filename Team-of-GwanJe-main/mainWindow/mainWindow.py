@@ -6,10 +6,6 @@ import sys, os
 from PyQt5.QtCore import QUrl, QTimer
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtWidgets import QApplication, QMainWindow
-# from mainWindow.mainWindow import MainWindow
-# from prototype import MapViewer
-# from test import MapViewer
-
 
 class MapViewer_Thread(QThread):
     def __init__(self, mainwindow):
