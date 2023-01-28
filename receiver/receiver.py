@@ -9,7 +9,6 @@ class Receiver(threading.Thread):
         super().__init__()
         self.count = 0
         self.datahub = datahub
-        self.stop_flag = threading.Event()
         self.first_time = True
         self.ser = None
 
@@ -25,6 +24,7 @@ class Receiver(threading.Thread):
             return alldata
 
     def setSerialport(self,myport):
+            print(myport)
             self.ser = serial.Serial(port=myport,
                                     baudrate = 9600,
                                     parity=serial.PARITY_NONE,
@@ -33,9 +33,9 @@ class Receiver(threading.Thread):
                                     timeout=2)
 
     def run(self):
-        while not self.stop_flag.is_set():
+        while True:
             if self.datahub.iscommunication_start:
-                try:
+                # try:
                         if self.first_time:
                             self.setSerialport(self.datahub.mySerialPort)
                             self.first_time=False
@@ -52,14 +52,9 @@ class Receiver(threading.Thread):
                                     self.datahub.update(data)
                                 else:
                                     pass
-                except:
-                    self.datahub.serial_port_error=1
+                # except:
+                #     self.datahub.serial_port_error=1
                     
-
-
-    
-    def stop(self):
-        self.stop_flag.set()
 
 if __name__=="__main__":
     receiver = Receiver()

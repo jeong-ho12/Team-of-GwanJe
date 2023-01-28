@@ -13,7 +13,7 @@ class DataSaver:
         self.writer = None
         self.saverows = 0
         self.data_queue = Queue()
-        self.thread = threading.Thread(target=self.saver, name='DataSaver', daemon=True)
+        self.thread = threading.Thread(target=self.saver, daemon=True)
         self.thread.start()
 
     def saver(self):

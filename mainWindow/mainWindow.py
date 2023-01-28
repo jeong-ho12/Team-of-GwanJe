@@ -3,6 +3,8 @@ from PyQt5.QtCore import QObject, QThread, pyqtSlot, QRunnable, QThreadPool, QUr
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 import sys, os
 
+
+
 class MapViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
         super().__init__()
@@ -83,24 +85,22 @@ class MainWindow(QMainWindow):
         self.stop_button = QPushButton("Stop",self,)
         self.rf_port_edit = QLineEdit("COM8",self)
         
-        self.rf_port_edit.setEnabled(True)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+        self.rf_port_edit.setEnabled(True)
         
         """Set Buttons Connection"""
         self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.stop_button_clicked)
         
         """Set Geometry"""
-        QLabel("Enter your Serial Port:",self).setGeometry(1050,320,200,30)
-        self.rf_port_edit.setGeometry(1050,350,200,30)
         self.start_button.setGeometry(1050,400,200,150)
         self.stop_button.setGeometry(1050,600,200,150)
-        
+        QLabel("Enter your Serial Port:",self).setGeometry(1050,320,200,30)
+        self.rf_port_edit.setGeometry(1050,350,200,30)
         
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
-
         self.mapviewer.start()
 
     # Run when start button is clicked
@@ -122,20 +122,15 @@ class MainWindow(QMainWindow):
                 self.start_button.setEnabled(False)
                 self.stop_button.setEnabled(True)
                 self.rf_port_edit.setEnabled(False)
-        else:
-            QMessageBox.warning(self,"warning","Cancel")
-        
-        
-
+        self.datahub.serial_port_error=-1
     # Run when stop button is clicked
     def stop_button_clicked(self):
         QMessageBox.information(self,"information","Program Stop")
         self.datahub.communication_stop()
         self.datahub.datasaver_stop()
-        self.datahub.serial_port_error=-1
-        
         self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)     
+        self.stop_button.setEnabled(False)
+        self.rf_port_edit.setEnabled(False)     
         
     # Main Window start method
     def start(self):
@@ -146,5 +141,5 @@ class MainWindow(QMainWindow):
         
     # Run when mainwindow is closed
     def closeEvent(self, event):
-        QMessageBox.warning(self, "Warning", "Program Closed.")
+        self.stop_button_clicked()
         event.accept()
