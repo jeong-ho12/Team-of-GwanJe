@@ -1,5 +1,4 @@
 import threading
-import sys
 
 from datasaver.datasaver import DataSaver
 from receiver.receiver   import Receiver

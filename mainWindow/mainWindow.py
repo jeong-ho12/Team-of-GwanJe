@@ -1,11 +1,7 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox
-from PyQt5.QtCore import QObject, QThread, pyqtSlot, QRunnable, QThreadPool
-import sys
-import threading
-import sys, os
-from PyQt5.QtCore import QUrl, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox, QInputDialog
+from PyQt5.QtCore import QObject, QThread, pyqtSlot, QRunnable, QThreadPool, QUrl, QTimer
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys, os
 
 class MapViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
@@ -32,7 +28,7 @@ class MapViewer_Thread(QThread):
         page = self.view.page()
         # Inject a JavaScript function to update the marker's location
         self.script = f"""
-        var lat = 36.665;
+        var lat = 36.666;
         var lng = 126.666;
         var map = L.map("map").setView([lat,lng], 15);
         L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
@@ -40,9 +36,18 @@ class MapViewer_Thread(QThread):
             maxZoom: 18,
         }}).addTo(map);
         var marker = L.marker([lat,lng]).addTo(map);
-        function updateMarker(latnew, lngnew) {{
-  
+        /*
+        trigger is a variable which update a map view according to their location
+        */
+        var trigger_javascript = 0;
+        function updateMarker(latnew, lngnew, trigger_python) {{
+           
             marker.setLatLng([latnew, lngnew]);
+        
+            if(trigger_python >= 1 && trigger_javascript == 0) {{
+            map.setView([latnew,lngnew], 15);
+            trigger_javascript = 1;
+            }}
         }}
         """
         #{print(self.datahub.latitudes)}
@@ -50,23 +55,26 @@ class MapViewer_Thread(QThread):
         # Create a QTimer to call the updateMarker function every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_marker)
-        self.timer.start(500)
+        self.timer.start(1000)
 
     def update_marker(self):
+        #wait for receiving datas.....
+        if len(self.datahub.latitudes) == 0:
+            pass
         # Call the JavaScript function to update the marker's location
-        self.view.page().runJavaScript(f"updateMarker({self.datahub.latitudes[-1]},{self.datahub.longitudes[-1]})")
+        else: 
+            self.view.page().runJavaScript(f"updateMarker({self.datahub.latitudes[-1]},{self.datahub.longitudes[-1]},{len(self.datahub.latitudes)})")
 
     # Connect the QWebEngineView's loadFinished signal to the on_load_finished slot
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
         print("showed")
 
-
 class MainWindow(QMainWindow):
     def __init__(self, datahub):
         self.app = QApplication(sys.argv)
         super().__init__()
-        # self.widgethub = Widgethub()
+
         self.datahub = datahub
         self.resize(1280,960)
         
@@ -92,14 +100,23 @@ class MainWindow(QMainWindow):
     # Run when start button is clicked
     def start_button_clicked(self):
         QMessageBox.information(self,"information","Program Start")
-        self.datahub.communication_start()
-        self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
+        FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name')
+        if ok:
+            self.datahub.file_Name = FileName+'.csv'
+            self.datahub.communication_start()
+            self.datahub.datasaver_start()
+            self.start_button.setEnabled(False)
+            self.stop_button.setEnabled(True)
+        else:
+            QMessageBox.warning(self,"warning","Cancel")
+        
 
     # Run when stop button is clicked
     def stop_button_clicked(self):
         QMessageBox.information(self,"information","Program Stop")
         self.datahub.communication_stop()
+        self.datahub.datasaver_stop()
+        
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)     
         
