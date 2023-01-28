@@ -8,7 +8,7 @@ class DataSaver(QMainWindow):
     def __init__(self, datahub):
         super().__init__()
         self.datahub = datahub
-        self.file_name = 'fileName'
+        self.file_name = 'fileName.csv'
         self.buffer_size = 2
         self.counter = 0
         self.file = None
@@ -37,7 +37,10 @@ class DataSaver(QMainWindow):
                 for i in range(lineRemain):
 
                     print('write')
-                    self.data_queue.put([self.datahub.timespace[self.saverows+i],
+                    self.data_queue.put([self.datahub.timespace[self.saverows+i][0],
+                                         self.datahub.timespace[self.saverows+i][1],
+                                         self.datahub.timespace[self.saverows+i][2],
+                                         self.datahub.timespace[self.saverows+i][3],
                                          self.datahub.rolls[self.saverows+i],
                                          self.datahub.pitchs[self.saverows+i],
                                          self.datahub.yaws[self.saverows+i],
@@ -61,9 +64,11 @@ class DataSaver(QMainWindow):
             self.file = open(self.file_name, 'w', newline='')
             # QMessageBox.warning(self, "Warning", "File is Opened.")
             self.writer = csv.writer(self.file)
+            self.writer.writerow(["Hours","Minute","Second","10milis","Roll","Pitch","Yaw","RollSpeed","PitchSpeed","YawSpeed","Xaccel","Yaccel","Zaccel","longitude","latitude","altitude"])
             self.save_data()
         else:
-            QMessageBox.warning(self, "Warning", "Previous file is still open, please close it before opening a new one.")
+            pass
+            # QMessageBox.warning(self, "Warning", "Previous file is still open, please close it before opening a new one.")
 
         if not self.thread.is_alive():
             self.stop_event.clear()

@@ -16,8 +16,8 @@ class MapViewer_Thread(QThread):
 
         # Create the QWebEngineView widget
         self.view = QWebEngineView(self.mainwindow)
-        self.view.setGeometry(0, 0, 1280, 960)
-
+        self.view.setGeometry(240,180, 800, 600)
+        
         # Load the HTML file that contains the leaflet map
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
@@ -50,7 +50,7 @@ class MapViewer_Thread(QThread):
         # Create a QTimer to call the updateMarker function every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_marker)
-        self.timer.start(2000)
+        self.timer.start(500)
 
     def update_marker(self):
         # Call the JavaScript function to update the marker's location
@@ -62,21 +62,55 @@ class MapViewer_Thread(QThread):
         print("showed")
 
 
-
 class MainWindow(QMainWindow):
     def __init__(self, datahub):
         self.app = QApplication(sys.argv)
         super().__init__()
         # self.widgethub = Widgethub()
         self.datahub = datahub
+        self.resize(1280,960)
+        
+        """Set Buttons"""
+        self.start_button = QPushButton("Press Start",self,)
+        self.stop_button = QPushButton("Stop",self,)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        
+        """Set Buttons Connection"""
+        self.start_button.clicked.connect(self.start_button_clicked)
+        self.stop_button.clicked.connect(self.stop_button_clicked)
+        
+        """Set Geometry"""
+        self.start_button.setGeometry(1050,400,200,150)
+        self.stop_button.setGeometry(1050,600,200,150)
+        
+        """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
 
         self.mapviewer.start()
 
+    # Run when start button is clicked
+    def start_button_clicked(self):
+        QMessageBox.information(self,"information","Program Start")
+        self.datahub.communication_start()
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
 
+    # Run when stop button is clicked
+    def stop_button_clicked(self):
+        QMessageBox.information(self,"information","Program Stop")
+        self.datahub.communication_stop()
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)     
+        
+    # Main Window start method
     def start(self):
         self.show()
-
-
+        
     def setEventLoop(self):
         sys.exit(self.app.exec_())
+        
+    # Run when mainwindow is closed
+    def closeEvent(self, event):
+        QMessageBox.warning(self, "Warning", "Program Closed.")
+        event.accept()
