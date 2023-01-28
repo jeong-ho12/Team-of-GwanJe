@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self,)
         self.stop_button = QPushButton("Stop",self,)
+        self.rf_port_edit = QLineEdit("COM8",self)
+        
+        self.rf_port_edit.setEnabled(True)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         
@@ -89,8 +92,11 @@ class MainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.stop_button_clicked)
         
         """Set Geometry"""
+        QLabel("Enter your Serial Port:",self).setGeometry(1050,320,200,30)
+        self.rf_port_edit.setGeometry(1050,350,200,30)
         self.start_button.setGeometry(1050,400,200,150)
         self.stop_button.setGeometry(1050,600,200,150)
+        
         
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
@@ -100,13 +106,16 @@ class MainWindow(QMainWindow):
     # Run when start button is clicked
     def start_button_clicked(self):
         QMessageBox.information(self,"information","Program Start")
-        FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name')
+        FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name',QLineEdit.Normal,"Your File Name")
         if ok:
+            self.mySerialPort=self.rf_port_edit.text()
             self.datahub.file_Name = FileName+'.csv'
             self.datahub.communication_start()
             self.datahub.datasaver_start()
+            
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
+            self.rf_port_edit.setEnabled(False)
         else:
             QMessageBox.warning(self,"warning","Cancel")
         
