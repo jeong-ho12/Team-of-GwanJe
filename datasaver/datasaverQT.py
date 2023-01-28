@@ -37,6 +37,8 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+
+
     def start(self):
         filename = self.file_name_edit.text()
         try:

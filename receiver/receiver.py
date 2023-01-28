@@ -30,17 +30,21 @@ class Receiver(threading.Thread):
 
     def run(self):
         while not self.stop_flag.is_set():
-            header1 = self.ser.read(4)
-            if header1 == b'?\x80\x00\x00':
-                header2 = self.ser.read(4)
-                if header2 == b'@\x00\x00\x00':
-                    time_bytes = self.ser.read(16)
-                    data_bytes = self.ser.read(52)
-                    data = self._decode_data(time_bytes, data_bytes)
-                    if data is not None:
-                        self.datahub.update(data)
-                    else:
-                        pass
+            
+            if self.datahub.iscommunication_start:
+                header1 = self.ser.read(4)
+                if header1 == b'?\x80\x00\x00':
+                    header2 = self.ser.read(4)
+                    if header2 == b'@\x00\x00\x00':
+                        time_bytes = self.ser.read(16)
+                        data_bytes = self.ser.read(52)
+                        data = self._decode_data(time_bytes, data_bytes)
+                        if data is not None:
+                            self.datahub.update(data)
+                        else:
+                            pass
+            else:
+                pass
     
     def stop(self):
         self.stop_flag.set()
