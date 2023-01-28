@@ -9,7 +9,8 @@ class Datahub:
         self.iscommunication_start = 0
         self.isdatasaver_start = 0
         self.file_Name = 'FileName.csv'
-
+        self.mySerialPort = 'COM8'
+        
         """
         Rocket Status Parameter
         """
@@ -29,7 +30,7 @@ class Datahub:
         
         #map view trigger
         self.trigger_python = 0
-        
+            
     def communication_start(self):
         self.iscommunication_start=1
         

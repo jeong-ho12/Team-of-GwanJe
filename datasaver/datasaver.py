@@ -33,7 +33,6 @@ class DataSaver:
             if lineRemain > 0:
                 for i in range(lineRemain):
 
-                    print('write')
                     self.data_queue.put([self.datahub.timespace[self.saverows+i][0],
                                          self.datahub.timespace[self.saverows+i][1],
                                          self.datahub.timespace[self.saverows+i][2],

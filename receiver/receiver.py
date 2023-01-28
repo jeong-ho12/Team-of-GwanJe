@@ -5,17 +5,13 @@ import threading
 #from datahub import Datahub
 
 class Receiver(threading.Thread):
-    def __init__(self, myport, datahub):
+    def __init__(self, datahub):
         super().__init__()
-        self.ser = serial.Serial(port=myport,
-                    baudrate = 9600,
-                    parity=serial.PARITY_NONE,
-                    stopbits=serial.STOPBITS_TWO,
-                    bytesize=serial.EIGHTBITS,
-                    timeout=2)
         self.count = 0
         self.datahub = datahub
         self.stop_flag = threading.Event()
+        self.first_time = True
+        self.ser = None
 
     def _decode_data(self, time_bytes, data_bytes):
         time = struct.unpack('>4f', time_bytes)
@@ -28,14 +24,27 @@ class Receiver(threading.Thread):
             alldata = np.concatenate((decodetime, processed_data),axis=0)
             return alldata
 
+    def setSerialport(self,myport):
+        self.ser = serial.Serial(port=myport,
+                                baudrate = 9600,
+                                parity=serial.PARITY_NONE,
+                                stopbits=serial.STOPBITS_TWO,
+                                bytesize=serial.EIGHTBITS,
+                                timeout=2)
+
     def run(self):
         while not self.stop_flag.is_set():
-            
+
             if self.datahub.iscommunication_start:
+                if self.first_time:
+                    self.setSerialport(self.datahub.mySerialPort)
+                    self.first_time=False
+                    
                 header1 = self.ser.read(4)
                 if header1 == b'?\x80\x00\x00':
                     header2 = self.ser.read(4)
                     if header2 == b'@\x00\x00\x00':
+                        
                         time_bytes = self.ser.read(16)
                         data_bytes = self.ser.read(52)
                         data = self._decode_data(time_bytes, data_bytes)
@@ -43,8 +52,7 @@ class Receiver(threading.Thread):
                             self.datahub.update(data)
                         else:
                             pass
-            else:
-                pass
+
     
     def stop(self):
         self.stop_flag.set()
