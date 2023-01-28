@@ -22,8 +22,8 @@ class Datahub:
         self.Xaccels = []
         self.Yaccels = []
         self.Zaccels = []
-        self.latitudes = [0]
-        self.longitudes = [0]
+        self.latitudes = []
+        self.longitudes = []
         self.altitude = []
      
     def communication_start(self):
