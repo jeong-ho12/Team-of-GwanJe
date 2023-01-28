@@ -10,7 +10,7 @@ class Datahub:
         self.isdatasaver_start = 0
         self.file_Name = 'FileName.csv'
         self.mySerialPort = 'COM8'
-        
+        self.serial_port_error=-1
         """
         Rocket Status Parameter
         """
@@ -36,7 +36,12 @@ class Datahub:
         
     def communication_stop(self):
         self.iscommunication_start=0
-        
+    
+    def check_communication_error(self):
+        while True:
+            if self.serial_port_error==0 or self.serial_port_error==1:
+                return self.serial_port_error
+    
     def datasaver_start(self):
         self.isdatasaver_start=1
 
