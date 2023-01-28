@@ -39,7 +39,6 @@ class Datahub:
     
     def check_communication_error(self):
         while True:
-            print(12)
             if self.serial_port_error==0 or self.serial_port_error==1:
                 return self.serial_port_error
     

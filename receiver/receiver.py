@@ -53,7 +53,6 @@ class Receiver(threading.Thread):
                                 else:
                                     pass
                 except:
-                    print(1)
                     self.datahub.serial_port_error=1
                     
 
