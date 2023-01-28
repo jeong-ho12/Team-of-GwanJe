@@ -51,8 +51,6 @@ class Master:
         self.mainWindow.start() 
         self.mainWindow.setEventLoop()
 
-
-
 if __name__ == "__main__":
     master = Master()
 

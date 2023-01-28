@@ -108,16 +108,23 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self,"information","Program Start")
         FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name',QLineEdit.Normal,"Your File Name")
         if ok:
-            self.mySerialPort=self.rf_port_edit.text()
+            self.datahub.mySerialPort=self.rf_port_edit.text()
             self.datahub.file_Name = FileName+'.csv'
             self.datahub.communication_start()
-            self.datahub.datasaver_start()
             
-            self.start_button.setEnabled(False)
-            self.stop_button.setEnabled(True)
-            self.rf_port_edit.setEnabled(False)
+            self.datahub.serial_port_error=-1
+            if self.datahub.check_communication_error():
+                QMessageBox.warning(self,"warning","SSUJJUN")
+                self.datahub.communication_stop()
+
+            else:
+                self.datahub.datasaver_start()
+                self.start_button.setEnabled(False)
+                self.stop_button.setEnabled(True)
+                self.rf_port_edit.setEnabled(False)
         else:
             QMessageBox.warning(self,"warning","Cancel")
+        
         
 
     # Run when stop button is clicked
@@ -125,6 +132,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self,"information","Program Stop")
         self.datahub.communication_stop()
         self.datahub.datasaver_stop()
+        self.datahub.serial_port_error=-1
         
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)     
