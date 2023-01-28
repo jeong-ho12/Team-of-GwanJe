@@ -28,7 +28,6 @@ class DataSaver(QMainWindow):
                 if self.counter >= self.buffer_size:
                     self.counter = 0
                     self.file.flush()
-                    print(2)
             time.sleep(0.1)
                 
     def save_data(self):
@@ -54,13 +53,13 @@ class DataSaver(QMainWindow):
                     
 
                 self.saverows += lineRemain
-
-
+            
+                
     def start(self):
         if self.file is None or self.file.closed:
             self.counter = 0
             self.file = open(self.file_name, 'w', newline='')
-            QMessageBox.warning(self, "Warning", "File is Opened.")
+            # QMessageBox.warning(self, "Warning", "File is Opened.")
             self.writer = csv.writer(self.file)
             self.save_data()
         else:
@@ -68,17 +67,3 @@ class DataSaver(QMainWindow):
 
         if not self.thread.is_alive():
             self.stop_event.clear()
-        
-            
-
-
-    def stop(self):
-        self.stop_event.set()
-
-        if not self.data_queue.empty():
-            while not self.data_queue.empty():
-                data = self.data_queue.get()
-                self.writer.writerow(data)
-        if self.file != None and not self.file.closed:
-            self.file.close()
-            QMessageBox.warning(self, "Warning", "File Closed.")

@@ -6,7 +6,6 @@ from receiver.receiver   import Receiver
 from mainWindow.mainWindow import MainWindow
 from datahub import Datahub
 
-
 class Thread_Receiver(threading.Thread):
     def __init__(self,myport,datahub):
         super().__init__()
@@ -18,17 +17,15 @@ class Thread_Receiver(threading.Thread):
         receiver.start()
 
 
-
 class Thread_DataSaver(threading.Thread):
     def __init__(self, datahub):
         super().__init__()
         self.datahub = datahub
+        
 
     def run(self):
         datasaver = DataSaver(self.datahub)
         datasaver.start()
-
-
 
 
 class Master:
@@ -36,10 +33,13 @@ class Master:
     def __init__(self,myport):
         
         self.datahub = Datahub()
+
         self.mainWindow = MainWindow(self.datahub)
 
         self.datasaver = Thread_DataSaver(self.datahub)
+
         self.receiver = Thread_Receiver(myport,self.datahub)
+
 
         self.datasaver.daemon = True
         self.receiver.daemon = True

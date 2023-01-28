@@ -1,2 +1,6 @@
-Examples\
-__pycache__\
+gitignore
+Examples/
+__pycache__/
+*.txt
+*.csv
+*.vscode
