@@ -7,7 +7,8 @@ class Datahub:
         Communication Status Parameter
         """
         self.iscommunication_start = 0
-
+        self.isdatasaver_start = 0
+        self.file_Name = 'FileName.csv'
 
         """
         Rocket Status Parameter
@@ -25,14 +26,21 @@ class Datahub:
         self.latitudes = []
         self.longitudes = []
         self.altitude = []
-     
+        
+        #map view trigger
+        self.trigger_python = 0
+        
     def communication_start(self):
         self.iscommunication_start=1
         
     def communication_stop(self):
         self.iscommunication_start=0
         
-        
+    def datasaver_start(self):
+        self.isdatasaver_start=1
+
+    def datasaver_stop(self):
+        self.isdatasaver_start=0
         
     def update(self,datas):
         """Update Datas received from rocket"""
@@ -50,5 +58,3 @@ class Datahub:
         self.latitudes.append(datas[13])
         self.longitudes.append(datas[14])
         self.altitude.append(datas[15])
-
-        print(self.timespace)
