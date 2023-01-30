@@ -15,16 +15,40 @@ class GraphViewer_Thread(QThread):
         self.view.load(QUrl())
         self.view.setGeometry(10, 10, 10, 10)
         
-        self.pw = pg.PlotWidget(self.mainwindow)
-        self.pw.setGeometry(10, 10, 300, 300)
+        self.pw_angle = pg.PlotWidget(self.mainwindow)
+        self.pw_angleSpeed = pg.PlotWidget(self.mainwindow)
+        self.pw_accel = pg.PlotWidget(self.mainwindow)
+        
+        self.pw_angle.setGeometry(10, 10, 300, 300)
+        self.pw_angleSpeed.setGeometry(10, 320, 300, 300)
+        self.pw_accel.setGeometry(10, 630, 300, 300)
         
 
-        self.graph = self.pw.plot(pen='g')
+        self.curve_roll = self.pw_angle.plot(pen='r')
+        self.curve_pitch = self.pw_angle.plot(pen='g')
+        self.curve_yaw = self.pw_angle.plot(pen='b')
+
+        self.curve_rollSpeed = self.pw_angleSpeed.plot(pen='r')
+        self.curve_pitchSpeed = self.pw_angleSpeed.plot(pen='g')
+        self.curve_yawSpeed = self.pw_angleSpeed.plot(pen='b')
+
+        self.curve_xaccel = self.pw_accel.plot(pen='r')
+        self.curve_yaccel = self.pw_accel.plot(pen='g')
+        self.curve_zaccel = self.pw_accel.plot(pen='b')
+
         self.loadnum = 0
 
-        self.x = []
-        self.y = []
         self.init_sec = 0
+        self.time = []
+        self.roll = []
+        self.pitch = []
+        self.yaw = []
+        self.rollSpeed = []
+        self.pitchSpeed = []
+        self.yawSpeed = []
+        self.xaccel = []
+        self.yaccel = []
+        self.zaccel = []
 
     def update_data(self):
         lineRemain =len(self.datahub.timespace) > self.loadnum
@@ -34,23 +58,48 @@ class GraphViewer_Thread(QThread):
                 sec = self.datahub.timespace[self.loadnum+i][2]
                 tenmilis = self.datahub.timespace[self.loadnum+i][3]
                 total_sec = min*60+sec+tenmilis*0.01
-                if len(self.x)==0:
+                if len(self.time)==0:
                     self.init_sec = total_sec
-                self.x.append(total_sec-self.init_sec)
-                self.y.append(self.datahub.latitudes[self.loadnum+i])
+                self.time.append(total_sec-self.init_sec)
+
+                self.roll.append(self.datahub.rolls[self.loadnum+i])
+                self.pitch.append(self.datahub.pitchs[self.loadnum+i])
+                self.yaw.append(self.datahub.yaws[self.loadnum+i])
+
+                self.rollSpeed.append(self.datahub.rollSpeeds[self.loadnum+i])
+                self.pitchSpeed.append(self.datahub.pitchSpeeds[self.loadnum+i])
+                self.yawSpeed.append(self.datahub.yawSpeeds[self.loadnum+i])
+
+                self.xaccel.append(self.datahub.Xaccels[self.loadnum+i])
+                self.yaccel.append(self.datahub.Yaccels[self.loadnum+i])
+                self.zaccel.append(self.datahub.Zaccels[self.loadnum+i])
+
             self.loadnum += lineRemain
-        print(self.x)
-        self.graph.setData(x=self.x, y=self.y)
+        print(self.time)
+        self.curve_roll.setData(x=self.time, y=self.roll)
+        self.curve_pitch.setData(x=self.time, y=self.pitch)
+        self.curve_yaw.setData(x=self.time, y=self.yaw)
+
+        self.curve_rollSpeed.setData(x=self.time, y=self.rollSpeed)
+        self.curve_pitchSpeed.setData(x=self.time, y=self.pitchSpeed)
+        self.curve_yawSpeed.setData(x=self.time, y=self.yawSpeed)
+
+        self.curve_xaccel.setData(x=self.time, y=self.xaccel)
+        self.curve_yaccel.setData(x=self.time, y=self.yaccel)
+        self.curve_zaccel.setData(x=self.time, y=self.zaccel)
+
+        self.pw_angle.setXRange(self.time[-1]-10,self.time[-1])
+        self.pw_angleSpeed.setXRange(self.time[-1]-10,self.time[-1])
+        self.pw_accel.setXRange(self.time[-1]-10,self.time[-1])
 
     def on_load_finished(self):
         # to move the timer to the same thread as the QObject
         self.mytimer = QTimer(self)
         self.mytimer.timeout.connect(self.update_data)
-        self.mytimer.start(100)
+        self.mytimer.start(500)
         print('Show Graph')
 
     def run(self):
-        print(1)
         self.view.loadFinished.connect(self.on_load_finished)
 
 
@@ -107,7 +156,7 @@ class MapViewer_Thread(QThread):
         # Create a QTimer to call the updateMarker function every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_marker)
-        self.timer.start(100)
+        self.timer.start(1000)
 
     def update_marker(self):
         #wait for receiving datas.....
