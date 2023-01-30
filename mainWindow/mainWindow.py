@@ -1,7 +1,57 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox, QInputDialog
 from PyQt5.QtCore import QObject, QThread, pyqtSlot, QRunnable, QThreadPool, QUrl, QTimer
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 import sys, os
+import pyqtgraph as pg
+import time
+
+class GraphViewer_Thread(QThread):
+    def __init__(self, mainwindow,datahub):
+        super().__init__()
+        self.mainwindow = mainwindow
+        self.datahub = datahub
+
+        self.view = QWebEngineView(self.mainwindow)
+        self.view.load(QUrl())
+        self.view.setGeometry(10, 10, 10, 10)
+        
+        self.pw = pg.PlotWidget(self.mainwindow)
+        self.pw.setGeometry(10, 10, 300, 300)
+        
+
+        self.graph = self.pw.plot(pen='g')
+        self.loadnum = 0
+
+        self.x = []
+        self.y = []
+        self.init_sec = 0
+
+    def update_data(self):
+        lineRemain =len(self.datahub.timespace) > self.loadnum
+        if lineRemain > 0:
+            for i in range(lineRemain):
+                min = self.datahub.timespace[self.loadnum+i][1]
+                sec = self.datahub.timespace[self.loadnum+i][2]
+                tenmilis = self.datahub.timespace[self.loadnum+i][3]
+                total_sec = min*60+sec+tenmilis*0.01
+                if len(self.x)==0:
+                    self.init_sec = total_sec
+                self.x.append(total_sec-self.init_sec)
+                self.y.append(self.datahub.latitudes[self.loadnum+i])
+            self.loadnum += lineRemain
+        print(self.x)
+        self.graph.setData(x=self.x, y=self.y)
+
+    def on_load_finished(self):
+        # to move the timer to the same thread as the QObject
+        self.mytimer = QTimer(self)
+        self.mytimer.timeout.connect(self.update_data)
+        self.mytimer.start(100)
+        print('Show Graph')
+
+    def run(self):
+        print(1)
+        self.view.loadFinished.connect(self.on_load_finished)
 
 
 
@@ -14,7 +64,7 @@ class MapViewer_Thread(QThread):
 
         # Create the QWebEngineView widget
         self.view = QWebEngineView(self.mainwindow)
-        self.view.setGeometry(240,180, 800, 600)
+        self.view.setGeometry(320,220, 800, 600)
         
         # Load the HTML file that contains the leaflet map
         path = os.path.abspath(__file__)
@@ -57,7 +107,7 @@ class MapViewer_Thread(QThread):
         # Create a QTimer to call the updateMarker function every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_marker)
-        self.timer.start(1000)
+        self.timer.start(100)
 
     def update_marker(self):
         #wait for receiving datas.....
@@ -70,7 +120,7 @@ class MapViewer_Thread(QThread):
     # Connect the QWebEngineView's loadFinished signal to the on_load_finished slot
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
-        print("showed")
+        print("show Map")
 
 class MainWindow(QMainWindow):
     def __init__(self, datahub):
@@ -78,7 +128,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.datahub = datahub
-        self.resize(1280,960)
+        self.resize(1440,1080)
         
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self,)
@@ -94,14 +144,16 @@ class MainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.stop_button_clicked)
         
         """Set Geometry"""
-        self.start_button.setGeometry(1050,400,200,150)
-        self.stop_button.setGeometry(1050,600,200,150)
-        QLabel("Enter your Serial Port:",self).setGeometry(1050,320,200,30)
-        self.rf_port_edit.setGeometry(1050,350,200,30)
+        self.start_button.setGeometry(1170,400,200,150)
+        self.stop_button.setGeometry(1170,600,200,150)
+        QLabel("Enter your Serial Port:",self).setGeometry(1170,320,200,30)
+        self.rf_port_edit.setGeometry(1170,350,200,30)
         
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
+        self.graphviewr = GraphViewer_Thread(self,datahub)
         self.mapviewer.start()
+        self.graphviewr.start()
 
     # Run when start button is clicked
     def start_button_clicked(self):
