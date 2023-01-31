@@ -39,7 +39,7 @@ class Master:
         self.receiver = Thread_Receiver(self.datahub)
 
 
-        self.datasaver.daemon = True
+        # self.datasaver.daemon = True
         self.receiver.daemon = True
         
         

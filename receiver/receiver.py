@@ -22,7 +22,7 @@ class Receiver(threading.Thread):
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_TWO,
                                     bytesize=serial.EIGHTBITS,
-                                    timeout=0.2)
+                                    timeout=0.1)
 
     def _decode_data(self, data_bytes):
         decode_data = struct.unpack('>17f', data_bytes)
@@ -49,9 +49,11 @@ class Receiver(threading.Thread):
                             if header2 == b'B':
                                 bytes_data = self.ser.read(68)
                                 self._decode_data(bytes_data)
-            
+                else:
+                    time.sleep(0.1)
             # except:
             #     self.datahub.serial_port_error=1
+
 
 if __name__=="__main__":
     receiver = Receiver()
