@@ -2,6 +2,7 @@ import threading
 import csv
 from queue import Queue
 import time
+import numpy as np
 
 class DataSaver:
     def __init__(self, datahub):
@@ -12,9 +13,9 @@ class DataSaver:
         self.file = None
         self.writer = None
         self.saverows = 0
-        self.data_queue = Queue()
-        self.thread = threading.Thread(target=self.saver, daemon=True)
-        self.thread.start()
+        # self.data_queue = Queue()
+        # self.thread = threading.Thread(target=self.saver, daemon=True)
+        # self.thread.start()
 
     def saver(self):
         while True:
@@ -29,29 +30,31 @@ class DataSaver:
                 
     def save_data(self):
         while self.datahub.isdatasaver_start:
-            lineRemain = len(self.datahub.timespace) - self.saverows
+            lineRemain = len(self.datahub.altitude) - self.saverows
             if lineRemain > 0:
+                data = np.vstack((self.datahub.hours[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.mins[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.secs[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.tenmilis[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.rolls[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.pitchs[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.yaws[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.rollSpeeds[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.pitchSpeeds[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.yawSpeeds[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.Xaccels[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.Yaccels[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.Zaccels[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.latitudes[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.longitudes[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.altitude[self.saverows:self.saverows+lineRemain]))
+
                 for i in range(lineRemain):
-
-                    self.data_queue.put([self.datahub.timespace[self.saverows+i][0],
-                                         self.datahub.timespace[self.saverows+i][1],
-                                         self.datahub.timespace[self.saverows+i][2],
-                                         self.datahub.timespace[self.saverows+i][3],
-                                         self.datahub.rolls[self.saverows+i],
-                                         self.datahub.pitchs[self.saverows+i],
-                                         self.datahub.yaws[self.saverows+i],
-                                         self.datahub.rollSpeeds[self.saverows+i],
-                                         self.datahub.pitchSpeeds[self.saverows+i],
-                                         self.datahub.yawSpeeds[self.saverows+i],
-                                         self.datahub.Xaccels[self.saverows+i],
-                                         self.datahub.Yaccels[self.saverows+i],
-                                         self.datahub.Zaccels[self.saverows+i],
-                                         self.datahub.latitudes[self.saverows+i],
-                                         self.datahub.longitudes[self.saverows+i],
-                                         self.datahub.altitude[self.saverows+i]])
-                    
-
+                    self.writer.writerow(data[:,],)
+                self.file.flush()
                 self.saverows += lineRemain
+
+
                 
     def start(self):
         while True:
@@ -72,9 +75,9 @@ class DataSaver:
                 
     def stop(self):
         if self.file != None and not self.file.closed:
-            if not self.data_queue.empty():
-                while not self.data_queue.empty():
-                    data = self.data_queue.get()
-                    self.writer.writerow(data)
+            # if not self.data_queue.empty():
+            #     while not self.data_queue.empty():
+            #         data = self.data_queue.get()
+            #         self.writer.writerow(data)
                 
             self.file.close()
