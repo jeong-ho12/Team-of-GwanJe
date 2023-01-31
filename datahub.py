@@ -6,7 +6,7 @@ class Datahub:
         """
         Communication Status Parameter
         """
-        self.iscommunication_start = 0
+        self.iscommunication_start = False
         self.isdatasaver_start = 0
         self.file_Name = 'FileName.csv'
         self.mySerialPort = 'COM8'
@@ -33,12 +33,14 @@ class Datahub:
         
         #map view trigger
         self.trigger_python = 0
+
+        self.n=0
             
     def communication_start(self):
-        self.iscommunication_start=1
+        self.iscommunication_start=True
         
     def communication_stop(self):
-        self.iscommunication_start=0
+        self.iscommunication_start=False
     
     def check_communication_error(self):
         while True:
@@ -70,3 +72,6 @@ class Datahub:
         self.latitudes = np.append(self.latitudes, datas[13])
         self.longitudes = np.append(self.longitudes, datas[14])
         self.altitude = np.append(self.altitude, datas[15])
+
+        self.n+=1
+        print(self.n)

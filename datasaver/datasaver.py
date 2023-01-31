@@ -13,20 +13,7 @@ class DataSaver:
         self.file = None
         self.writer = None
         self.saverows = 0
-        # self.data_queue = Queue()
-        # self.thread = threading.Thread(target=self.saver, daemon=True)
-        # self.thread.start()
 
-    def saver(self):
-        while True:
-            while not self.data_queue.empty():
-                data = self.data_queue.get()
-                self.writer.writerow(data[:])
-                self.counter += 1
-                if self.counter >= self.buffer_size:
-                    self.counter = 0
-                    self.file.flush()
-            time.sleep(0.1)
                 
     def save_data(self):
         while self.datahub.isdatasaver_start:
@@ -75,9 +62,4 @@ class DataSaver:
                 
     def stop(self):
         if self.file != None and not self.file.closed:
-            # if not self.data_queue.empty():
-            #     while not self.data_queue.empty():
-            #         data = self.data_queue.get()
-            #         self.writer.writerow(data)
-                
             self.file.close()
