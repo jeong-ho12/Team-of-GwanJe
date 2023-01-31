@@ -50,7 +50,7 @@ class DataSaver:
                                   self.datahub.altitude[self.saverows:self.saverows+lineRemain]))
 
                 for i in range(lineRemain):
-                    self.writer.writerow(data[:,i],)
+                    self.writer.writerow(data[:,],)
                 self.file.flush()
                 self.saverows += lineRemain
 
