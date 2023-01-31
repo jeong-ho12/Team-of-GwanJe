@@ -24,37 +24,34 @@ class Receiver(threading.Thread):
             return alldata
 
     def setSerialport(self,myport):
-            print(myport)
             self.ser = serial.Serial(port=myport,
                                     baudrate = 9600,
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_TWO,
                                     bytesize=serial.EIGHTBITS,
-                                    timeout=2)
+                                    timeout=0.2)
 
     def run(self):
         while True:
             if self.datahub.iscommunication_start:
-                # try:
+
                         if self.first_time:
                             self.setSerialport(self.datahub.mySerialPort)
                             self.first_time=False
+
                         self.datahub.serial_port_error=0
-                        header1 = self.ser.read(4)
-                        if header1 == b'?\x80\x00\x00':
-                            header2 = self.ser.read(4)
-                            if header2 == b'@\x00\x00\x00':
-                                
+                        header1 = self.ser.read(1)
+
+                        if header1 == b'A':
+                            header2 = self.ser.read(1)
+                            
+                            if header2 == b'B':
                                 time_bytes = self.ser.read(16)
                                 data_bytes = self.ser.read(52)
                                 data = self._decode_data(time_bytes, data_bytes)
                                 if data is not None:
                                     self.datahub.update(data)
-                                else:
-                                    pass
-                # except:
-                #     self.datahub.serial_port_error=1
-                    
+         
 
 if __name__=="__main__":
     receiver = Receiver()
