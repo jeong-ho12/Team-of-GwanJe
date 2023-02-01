@@ -1,4 +1,4 @@
-import numpy as np
+from numpy import empty, append
 
 class Datahub:
 
@@ -15,22 +15,22 @@ class Datahub:
         Rocket Status Parameter
         """
         
-        self.hours = np.empty(0)
-        self.mins = np.empty(0)
-        self.secs = np.empty(0)
-        self.tenmilis = np.empty(0)
-        self.rolls = np.empty(0)
-        self.pitchs = np.empty(0)
-        self.yaws = np.empty(0)
-        self.rollSpeeds = np.empty(0)
-        self.pitchSpeeds = np.empty(0)
-        self.yawSpeeds = np.empty(0)
-        self.Xaccels = np.empty(0)
-        self.Yaccels = np.empty(0)
-        self.Zaccels = np.empty(0)
-        self.latitudes = np.empty(0)
-        self.longitudes = np.empty(0)
-        self.altitude = np.empty(0)
+        self.hours = empty(0)
+        self.mins = empty(0)
+        self.secs = empty(0)
+        self.tenmilis = empty(0)
+        self.rolls = empty(0)
+        self.pitchs = empty(0)
+        self.yaws = empty(0)
+        self.rollSpeeds = empty(0)
+        self.pitchSpeeds = empty(0)
+        self.yawSpeeds = empty(0)
+        self.Xaccels = empty(0)
+        self.Yaccels = empty(0)
+        self.Zaccels = empty(0)
+        self.latitudes = empty(0)
+        self.longitudes = empty(0)
+        self.altitude = empty(0)
         
         #map view trigger
         self.trigger_python = 0
@@ -55,19 +55,19 @@ class Datahub:
     def update(self,datas):
         """Update Datas received from rocket"""
         
-        self.hours = np.append(self.hours,datas[0])
-        self.mins = np.append(self.mins,datas[1])
-        self.secs = np.append(self.secs,datas[2])
-        self.tenmilis = np.append(self.tenmilis,datas[3])
-        self.rolls = np.append(self.rolls,datas[4])
-        self.pitchs = np.append(self.pitchs,datas[5])
-        self.yaws = np.append(self.yaws, datas[6])
-        self.rollSpeeds = np.append(self.rollSpeeds, datas[7])
-        self.pitchSpeeds = np.append(self.pitchSpeeds, datas[8])
-        self.yawSpeeds = np.append(self.yawSpeeds, datas[9])
-        self.Xaccels = np.append(self.Xaccels, datas[10])
-        self.Yaccels = np.append(self.Yaccels, datas[11])
-        self.Zaccels = np.append(self.Zaccels, datas[12])
-        self.latitudes = np.append(self.latitudes, datas[13])
-        self.longitudes = np.append(self.longitudes, datas[14])
-        self.altitude = np.append(self.altitude, datas[15])
+        self.hours = append(self.hours,datas[0])
+        self.mins = append(self.mins,datas[1])
+        self.secs = append(self.secs,datas[2])
+        self.tenmilis = append(self.tenmilis,datas[3])
+        self.rolls = append(self.rolls,datas[4])
+        self.pitchs = append(self.pitchs,datas[5])
+        self.yaws = append(self.yaws, datas[6])
+        self.rollSpeeds = append(self.rollSpeeds, datas[7])
+        self.pitchSpeeds = append(self.pitchSpeeds, datas[8])
+        self.yawSpeeds = append(self.yawSpeeds, datas[9])
+        self.Xaccels = append(self.Xaccels, datas[10])
+        self.Yaccels = append(self.Yaccels, datas[11])
+        self.Zaccels = append(self.Zaccels, datas[12])
+        self.latitudes = append(self.latitudes, datas[13])
+        self.longitudes = append(self.longitudes, datas[14])
+        self.altitude = append(self.altitude, datas[15])

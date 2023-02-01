@@ -1,8 +1,6 @@
-import threading
-import csv
-from queue import Queue
-import time
-import numpy as np
+from csv import writer
+from time import sleep
+from numpy import vstack
 
 class DataSaver:
     def __init__(self, datahub):
@@ -13,9 +11,7 @@ class DataSaver:
         self.file = None
         self.writer = None
         self.saverows = 0
-        # self.data_queue = Queue()
-        # self.thread = threading.Thread(target=self.saver, daemon=True)
-        # self.thread.start()
+
 
     def saver(self):
         while True:
@@ -26,13 +22,13 @@ class DataSaver:
                 if self.counter >= self.buffer_size:
                     self.counter = 0
                     self.file.flush()
-            time.sleep(0.1)
+            sleep(0.1)
                 
     def save_data(self):
         while self.datahub.isdatasaver_start:
             lineRemain = len(self.datahub.altitude) - self.saverows
             if lineRemain > 0:
-                data = np.vstack((self.datahub.hours[self.saverows:self.saverows+lineRemain],
+                data = vstack((self.datahub.hours[self.saverows:self.saverows+lineRemain],
                                   self.datahub.mins[self.saverows:self.saverows+lineRemain],
                                   self.datahub.secs[self.saverows:self.saverows+lineRemain],
                                   self.datahub.tenmilis[self.saverows:self.saverows+lineRemain],
@@ -54,7 +50,7 @@ class DataSaver:
                 self.file.flush()
                 self.saverows += lineRemain
 
-                time.sleep(0.1)
+                sleep(0.1)
 
 
                 
@@ -66,13 +62,13 @@ class DataSaver:
                     self.counter = 0
                     self.file = open(self.datahub.file_Name, 'w', newline='')
 
-                    self.writer = csv.writer(self.file)
+                    self.writer = writer(self.file)
                     self.writer.writerow(["Hours","Minute","Second","10milis","Roll","Pitch","Yaw","RollSpeed","PitchSpeed","YawSpeed","Xaccel","Yaccel","Zaccel","longitude","latitude","altitude"])
                     self.save_data()
                     self.stop()
                 else:
                     pass
-            time.sleep(0.1)
+            sleep(0.1)
             
                 
     def stop(self):
