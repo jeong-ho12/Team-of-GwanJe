@@ -345,7 +345,7 @@ class MainWindow(QMainWindow):
             
             self.datahub.serial_port_error=-1
             if self.datahub.check_communication_error():
-                QMessageBox.warning(self,"warning","SSUJJUN")
+                QMessageBox.warning(self,"warning","Check the Port or Baudrate again.")
                 self.datahub.communication_stop()
 
             else:
