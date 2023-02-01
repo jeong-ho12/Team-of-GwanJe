@@ -1,9 +1,8 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox, QInputDialog
-from PyQt5.QtCore import QObject, QThread, pyqtSlot, QRunnable, QThreadPool, QUrl, QTimer
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog
+from PyQt5.QtCore import QThread, QUrl, QTimer
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 import sys, os
-import pyqtgraph as pg
-import time
+from pyqtgraph import PlotWidget, GridItem
 from numpy import empty
 from numpy import zeros
 
@@ -17,13 +16,13 @@ class GraphViewer_Thread(QThread):
         self.view.load(QUrl())
         self.view.setGeometry(10, 10, 10, 10)
         
-        self.pw_angle = pg.PlotWidget(self.mainwindow)
-        self.pw_angleSpeed = pg.PlotWidget(self.mainwindow)
-        self.pw_accel = pg.PlotWidget(self.mainwindow)
+        self.pw_angle = PlotWidget(self.mainwindow)
+        self.pw_angleSpeed = PlotWidget(self.mainwindow)
+        self.pw_accel = PlotWidget(self.mainwindow)
         
-        self.pw_angle.addItem(pg.GridItem())
-        self.pw_angleSpeed.addItem(pg.GridItem())
-        self.pw_accel.addItem(pg.GridItem())
+        self.pw_angle.addItem(GridItem())
+        self.pw_angleSpeed.addItem(GridItem())
+        self.pw_accel.addItem(GridItem())
 
         #set label in each axis
         self.pw_angle.getPlotItem().getAxis('bottom').setLabel('Time(second)')
@@ -123,33 +122,7 @@ class GraphViewer_Thread(QThread):
                 seconds = self.datahub.secs[-150:]
                 totaltime = hours + minutes + miliseconds + seconds
                 self.time[:] = totaltime - self.starttime
-                # print(self.time)
-                # print(self.datahub.secs[-30:])
-                
-            # lineRemain =len(self.datahub.timespace) - self.loadnum
-            # if lineRemain > 0:
-            #     for i in range(lineRemain):
-            #         min = self.datahub.timespace[self.loadnum+i][1]
-            #         sec = self.datahub.timespace[self.loadnum+i][2]
-            #         tenmilis = self.datahub.timespace[self.loadnum+i][3]
-            #         total_sec = min*60+sec+tenmilis*0.01
-            #         if len(self.time)==0:
-            #             self.init_sec = total_sec
-            #         self.time.append(total_sec-self.init_sec)
 
-            #         self.roll.append(self.datahub.rolls[self.loadnum+i])
-            #         self.pitch.append(self.datahub.pitchs[self.loadnum+i])
-            #         self.yaw.append(self.datahub.yaws[self.loadnum+i])
-
-            #         self.rollSpeed.append(self.datahub.rollSpeeds[self.loadnum+i])
-            #         self.pitchSpeed.append(self.datahub.pitchSpeeds[self.loadnum+i])
-            #         self.yawSpeed.append(self.datahub.yawSpeeds[self.loadnum+i])
-
-            #         self.xaccel.append(self.datahub.Xaccels[self.loadnum+i])
-            #         self.yaccel.append(self.datahub.Yaccels[self.loadnum+i])
-            #         self.zaccel.append(self.datahub.Zaccels[self.loadnum+i])
-
-            #     self.loadnum += lineRemain
             self.curve_roll.setData(x=self.time, y=self.roll)
             self.curve_pitch.setData(x=self.time, y=self.pitch)
             self.curve_yaw.setData(x=self.time, y=self.yaw)
@@ -162,20 +135,14 @@ class GraphViewer_Thread(QThread):
             self.curve_yaccel.setData(x=self.time, y=self.yaccel)
             self.curve_zaccel.setData(x=self.time, y=self.zaccel)
 
-            # self.pw_angle.setXRange(self.time[-1]-10,self.time[-1])
-            # self.pw_angleSpeed.setXRange(self.time[-1]-10,self.time[-1])
-            # self.pw_accel.setXRange(self.time[-1]-10,self.time[-1])
-
     def on_load_finished(self):
         # to move the timer to the same thread as the QObject
         self.mytimer = QTimer(self)
         self.mytimer.timeout.connect(self.update_data)
         self.mytimer.start(100)
-        print('Show Graph')
 
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
-
 
 
 class MapViewer_Thread(QThread):
@@ -243,7 +210,7 @@ class MapViewer_Thread(QThread):
     # Connect the QWebEngineView's loadFinished signal to the on_load_finished slot
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
-        print("show Map")
+
 
 class MainWindow(QMainWindow):
     def __init__(self, datahub):
@@ -252,6 +219,7 @@ class MainWindow(QMainWindow):
 
         self.datahub = datahub
         self.resize(1440,1080)
+        self.setStyleSheet("QMainWindow { background-color: rgb(20, 20, 20);}")
         
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self,)
