@@ -42,19 +42,27 @@ map_geometry = np.array([a*0.41,  b*0.04,  a*0.3,  a*0.3]).astype(int)
 model_geometry = np.array([a*0.75,  b*0.04,  a*0.2, a*0.3]).astype(int)
 
 # serial port editer geometry
-port_text_geometry = np.array([a*0.41,  a*0.27+b*0.132, a*0.03, a*0.0225]).astype(int)
-port_edit_geometry = np.array([a*0.44,  a*0.27+b*0.132,  a*0.08, a*0.0225]).astype(int)
+# serial port editer geometry
+port_text_geometry = np.array([a*0.41,  a*0.26+b*0.132, a*0.03, a*0.01125]).astype(int)
+port_edit_geometry = np.array([a*0.445,  a*0.26+b*0.132,  a*0.08, a*0.01125]).astype(int)
+
+# serial baudrate editer geometry
+baudrate_text_geometry = np.array([a*0.41,  a*0.28+b*0.132, a*0.03, a*0.01125]).astype(int)
+baudrate_edit_geometry = np.array([a*0.445,  a*0.28+b*0.132,  a*0.08, a*0.01125]).astype(int)
 
 # start/stop button geometry
 start_geometry = np.array([a*0.41,  0.132*b+0.3*a,  0.12*a,  0.12*a ]).astype(int)
 stop_geometry = np.array([a*0.56, a*0.27+b*0.132, 0.15*a, 0.15*a]).astype(int)
-
+status_geometry = np.array([a*0.41,  0.14*b+0.42*a, 0.3*a, 35]).astype(int)
 # 
-cmd_geometry = np.array([a*0.75, 0.27*a+0.132*b,  0.105*a,  0.105*a]).astype(int)
+cmd_geometry = np.array([a*0.75, 0.27*a+0.132*b,  a*0.2,  0.105*a]).astype(int)
 
 # all fonts
 font_portText = QFont()
-font_portText.setPointSize(17)
+font_portText.setPointSize(10)
+
+font_baudrate = QFont()
+font_baudrate.setPointSize(10)
 
 checker_font = QFont()
 checker_font.setPointSize(12)
@@ -77,12 +85,18 @@ font_start_text.setPointSize(20)
 font_stop_text = QFont()
 font_stop_text.setPointSize(20)
 
+font_status_text = QFont()
+font_status_text.setPointSize(11)
+
+start_status = 'Program start. you can push stop button'
+stop_status = 'Program stop. you can push start button'
 
 guide = """
-1. ~~~~\n
-2. ~~~~\n
-3. ~~~~\n
-4. ~~~~\n
-5. ~~~~\n
-
+1. Enter your serial port in the text box\n
+2. Pust start button\n
+3. Enter your save file name for save datas and push ok button\n
+3. You can push a check box left the graph to hide a curve\n
+4. You can drag a map or scroll the map to move view\n
+5. All reveiced data is saved in real-time and saved in same folder\n
+6. Push stop button
 """

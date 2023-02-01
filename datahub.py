@@ -10,6 +10,7 @@ class Datahub:
         self.isdatasaver_start = 0
         self.file_Name = 'FileName.csv'
         self.mySerialPort = 'COM8'
+        self.myBaudrate = 115200
         self.serial_port_error=-1
         """
         Rocket Status Parameter

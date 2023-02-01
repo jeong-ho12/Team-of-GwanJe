@@ -236,8 +236,11 @@ class MainWindow(QMainWindow):
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self)
         self.stop_button = QPushButton("Stop",self)
+        self.now_status = QLabel(ws.stop_status,self)
         self.rf_port_edit = QLineEdit("COM8",self)
         self.port_text = QLabel("Port:",self)
+        self.baudrate_edit = QLineEdit("115200",self)
+        self.baudrate_text = QLabel("Baudrate",self)
         self.guide_text = QLabel(ws.guide,self)
 
         self.start_button.setFont(ws.font_start_text)
@@ -251,6 +254,7 @@ class MainWindow(QMainWindow):
         shadow_stop_button.setOffset(8)
         self.start_button.setGraphicsEffect(shadow_start_button)
         self.stop_button.setGraphicsEffect(shadow_stop_button)
+        self.baudrate_text.setFont(ws.font_baudrate)
 
         self.port_text.setFont(ws.font_portText)
         self.guide_text.setFont(ws.font_guideText)
@@ -259,6 +263,8 @@ class MainWindow(QMainWindow):
         self.stop_button.setEnabled(False)
         self.rf_port_edit.setEnabled(True)
         
+        self.baudrate_edit.setEnabled(True)
+
         """Set Buttons Connection"""
         self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.stop_button_clicked)
@@ -314,7 +320,12 @@ class MainWindow(QMainWindow):
         self.stop_button.setGeometry(*ws.stop_geometry)
         self.port_text.setGeometry(*ws.port_text_geometry)
         self.rf_port_edit.setGeometry(*ws.port_edit_geometry)
+        self.baudrate_text.setGeometry(*ws.baudrate_text_geometry)
+        self.baudrate_edit.setGeometry(*ws.baudrate_edit_geometry)
         self.guide_text.setGeometry(*ws.cmd_geometry)
+
+        self.now_status.setGeometry(*ws.status_geometry)
+        self.now_status.setFont(ws.font_status_text)
         
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
@@ -328,6 +339,7 @@ class MainWindow(QMainWindow):
         FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name',QLineEdit.Normal,"Your File Name")
         if ok:
             self.datahub.mySerialPort=self.rf_port_edit.text()
+            self.datahub.myBaudrate = self.baudrate_edit.text()
             self.datahub.file_Name = FileName+'.csv'
             self.datahub.communication_start()
             
@@ -338,15 +350,18 @@ class MainWindow(QMainWindow):
 
             else:
                 self.datahub.datasaver_start()
+                self.now_status.setText(ws.start_status)
                 self.start_button.setEnabled(False)
                 self.stop_button.setEnabled(True)
                 self.rf_port_edit.setEnabled(False)
+                self.baudrate_edit.setEnabled(False)
         self.datahub.serial_port_error=-1
     # Run when stop button is clicked
     def stop_button_clicked(self):
         QMessageBox.information(self,"information","Program Stop")
         self.datahub.communication_stop()
         self.datahub.datasaver_stop()
+        self.now_status.setText(ws.stop_status)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.rf_port_edit.setEnabled(False)     

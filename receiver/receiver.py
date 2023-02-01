@@ -16,9 +16,9 @@ class Receiver(Thread):
         self.n = 0
 
 
-    def setSerialport(self,myport):
+    def setSerial(self,myport,mybaudrate):
             self.ser = Serial(port=myport,
-                                    baudrate = 115200,
+                                    baudrate = mybaudrate,
                                     parity=PARITY_NONE,
                                     stopbits=STOPBITS_TWO,
                                     bytesize=EIGHTBITS,
@@ -35,10 +35,10 @@ class Receiver(Thread):
 
     def run(self):
         while True:
-            # try:
+            try:
                 if self.datahub.iscommunication_start:
                         if self.first_time:
-                            self.setSerialport(self.datahub.mySerialPort)
+                            self.setSerial(self.datahub.mySerialPort,self.datahub.myBaudrate)
                             self.first_time=False
 
                         self.datahub.serial_port_error=0
@@ -46,14 +46,14 @@ class Receiver(Thread):
 
                         if header1 == b'A':
                             header2 = self.ser.read(1)
-                            
+
                             if header2 == b'B':
                                 bytes_data = self.ser.read(68)
                                 self._decode_data(bytes_data)
                 else:
                     sleep(0.1)
-            # except:
-            #     self.datahub.serial_port_error=1
+            except:
+                self.datahub.serial_port_error=1
 
 
 if __name__=="__main__":
