@@ -1,10 +1,12 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog
-from PyQt5.QtCore import QThread, QUrl, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QMdiSubWindow
+from PyQt5.QtCore import QThread, QUrl, QTimer, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtGui import QFont
+
 import sys, os
 from pyqtgraph import PlotWidget, GridItem
-from numpy import empty
-from numpy import zeros
+from numpy import empty, zeros
+from . import widgetSize as ws
 
 class GraphViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
@@ -14,12 +16,33 @@ class GraphViewer_Thread(QThread):
 
         self.view = QWebEngineView(self.mainwindow)
         self.view.load(QUrl())
-        self.view.setGeometry(10, 10, 10, 10)
+        self.view.setGeometry(*ws.webEngine_geometry)
         
         self.pw_angle = PlotWidget(self.mainwindow)
+        self.angle_title = QLabel(self.mainwindow)
+        self.angle_title.setText("<b>&#8226; Angle</b>")
+
         self.pw_angleSpeed = PlotWidget(self.mainwindow)
+        self.angleSpeed_title = QLabel(self.mainwindow)
+        self.angleSpeed_title.setText("<b>&#8226; Angle Speed</b>")
+
         self.pw_accel = PlotWidget(self.mainwindow)
-        
+        self.accel_title = QLabel(self.mainwindow)
+        self.accel_title.setText("<b>&#8226; Angle Speed</b>")
+
+        self.pw_angle.setGeometry(*ws.pw_angle_geometry)
+
+        self.pw_angleSpeed.setGeometry(*ws.pw_angleSpeed_geometry)
+        self.pw_accel.setGeometry(*ws.pw_accel_geometry)
+
+        self.angle_title.setGeometry(*ws.angle_title_geometry)
+        self.angleSpeed_title.setGeometry(*ws.angleSpeed_title_geometry)
+        self.accel_title.setGeometry(*ws.accel_title_geometry)
+
+        self.angle_title.setFont(ws.font_angle_title)
+        self.angleSpeed_title.setFont(ws.font_angleSpeed_title)
+        self.accel_title.setFont(ws.font_accel_title)
+
         self.pw_angle.addItem(GridItem())
         self.pw_angleSpeed.addItem(GridItem())
         self.pw_accel.addItem(GridItem())
@@ -41,13 +64,6 @@ class GraphViewer_Thread(QThread):
         self.pw_angle.getPlotItem().addLegend()
         self.pw_angleSpeed.getPlotItem().addLegend()
         self.pw_accel.getPlotItem().addLegend()
-    
-
-        
-
-        self.pw_angle.setGeometry(10, 10, 300, 300)
-        self.pw_angleSpeed.setGeometry(10, 320, 300, 300)
-        self.pw_accel.setGeometry(10, 630, 300, 300)
         
 
         self.curve_roll = self.pw_angle.plot(pen='r', name = "roll")
@@ -62,7 +78,6 @@ class GraphViewer_Thread(QThread):
         self.curve_yaccel = self.pw_accel.plot(pen='g',name = "y acc")
         self.curve_zaccel = self.pw_accel.plot(pen='b',name ="z acc")
 
-        
         self.loadnum = 0
 
         self.starttime = 0.0
@@ -102,9 +117,6 @@ class GraphViewer_Thread(QThread):
                 totaltime = hours + minutes + miliseconds + seconds
                 self.starttime = self.datahub.hours[0]*3600 + self.datahub.mins[0]*60 + self.datahub.tenmilis[0]*0.01+ self.datahub.secs[0]
                 self.time[-n:] = totaltime - self.starttime
-                print(n)
-                print("hello")
-                print(self.time)
             
             else : 
                 self.roll[:] = self.datahub.rolls[-150:]
@@ -154,7 +166,7 @@ class MapViewer_Thread(QThread):
 
         # Create the QWebEngineView widget
         self.view = QWebEngineView(self.mainwindow)
-        self.view.setGeometry(320,220, 800, 600)
+        self.view.setGeometry(*ws.map_geometry)
         
         # Load the HTML file that contains the leaflet map
         path = os.path.abspath(__file__)
@@ -218,14 +230,31 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.datahub = datahub
-        self.resize(1440,1080)
-        self.setStyleSheet("QMainWindow { background-color: rgb(20, 20, 20);}")
+        self.resize(*ws.full_size)
+        self.setStyleSheet("QMainWindow { background-color: rgb(250, 250, 250);}")
         
         """Set Buttons"""
-        self.start_button = QPushButton("Press Start",self,)
-        self.stop_button = QPushButton("Stop",self,)
+        self.start_button = QPushButton("Press Start",self)
+        self.stop_button = QPushButton("Stop",self)
         self.rf_port_edit = QLineEdit("COM8",self)
-        
+        self.port_text = QLabel("Port:",self)
+        self.guide_text = QLabel(ws.guide,self)
+
+        self.start_button.setFont(ws.font_start_text)
+        self.stop_button.setFont(ws.font_stop_text)
+        self.start_button.setStyleSheet("background-color: rgb(30,30,100); color: rgb(250, 250, 250);font-weight: bold;")
+        self.stop_button.setStyleSheet("background-color: rgb(150,30,30); color: rgb(250, 250, 250);font-weight: bold;")
+
+        shadow_start_button = QGraphicsDropShadowEffect()
+        shadow_stop_button = QGraphicsDropShadowEffect()
+        shadow_start_button.setOffset(8)
+        shadow_stop_button.setOffset(8)
+        self.start_button.setGraphicsEffect(shadow_start_button)
+        self.stop_button.setGraphicsEffect(shadow_stop_button)
+
+        self.port_text.setFont(ws.font_portText)
+        self.guide_text.setFont(ws.font_guideText)
+
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.rf_port_edit.setEnabled(True)
@@ -234,17 +263,64 @@ class MainWindow(QMainWindow):
         self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.stop_button_clicked)
         
+        self.roll_hide_checkbox = QCheckBox("roll",self)
+        self.pitch_hide_checkbox = QCheckBox("pitch",self)
+        self.yaw_hide_checkbox = QCheckBox("yaw",self)
+
+        self.rollspeed_hide_checkbox = QCheckBox("w_x",self)
+        self.pitchspeed_hide_checkbox = QCheckBox("w_y",self)
+        self.yawspeed_hide_checkbox = QCheckBox("w_z",self)
+
+        self.xacc_hide_checkbox = QCheckBox("Xaccel",self)
+        self.yacc_hide_checkbox = QCheckBox("Yaccel",self)
+        self.zacc_hide_checkbox = QCheckBox("Zaccel",self)
+
+        self.roll_hide_checkbox.setGeometry(*ws.roll_checker_geomoetry)
+        self.pitch_hide_checkbox.setGeometry(*ws.pitch_checker_geomoetry)
+        self.yaw_hide_checkbox.setGeometry(*ws.yaw_checker_geomoetry)
+
+        self.rollspeed_hide_checkbox.setGeometry(*ws.rollS_checker_geomoetry)
+        self.pitchspeed_hide_checkbox.setGeometry(*ws.pitchS_checker_geomoetry)
+        self.yawspeed_hide_checkbox.setGeometry(*ws.yawS_checker_geomoetry)
+
+        self.xacc_hide_checkbox.setGeometry(*ws.ax_checker_geomoetry)
+        self.yacc_hide_checkbox.setGeometry(*ws.ay_checker_geomoetry)
+        self.zacc_hide_checkbox.setGeometry(*ws.az_checker_geomoetry)
+
+        self.roll_hide_checkbox.setFont(ws.checker_font)
+        self.pitch_hide_checkbox.setFont(ws.checker_font)
+        self.yaw_hide_checkbox.setFont(ws.checker_font)
+
+        self.xacc_hide_checkbox.setFont(ws.checker_font)
+        self.yacc_hide_checkbox.setFont(ws.checker_font)
+        self.zacc_hide_checkbox.setFont(ws.checker_font)
+
+        self.roll_hide_checkbox.stateChanged.connect(self.roll_hide_checkbox_state)
+        self.pitch_hide_checkbox.stateChanged.connect(self.pitch_hide_checkbox_state)
+        self.yaw_hide_checkbox.stateChanged.connect(self.yaw_hide_checkbox_state)
+        self.rollspeed_hide_checkbox.stateChanged.connect(self.rollspeed_hide_checkbox_state)
+        self.pitchspeed_hide_checkbox.stateChanged.connect(self.pitchspeed_hide_checkbox_state)
+        self.yawspeed_hide_checkbox.stateChanged.connect(self.yawspeed_hide_checkbox_state)
+        self.xacc_hide_checkbox.stateChanged.connect(self.xacc_hide_checkbox_state)
+        self.yacc_hide_checkbox.stateChanged.connect(self.yacc_hide_checkbox_state)
+        self.zacc_hide_checkbox.stateChanged.connect(self.zacc_hide_checkbox_state)
+
+        self.rollspeed_hide_checkbox.setFont(ws.checker_font)
+        self.pitchspeed_hide_checkbox.setFont(ws.checker_font)
+        self.yawspeed_hide_checkbox.setFont(ws.checker_font)
+
         """Set Geometry"""
-        self.start_button.setGeometry(1170,400,200,150)
-        self.stop_button.setGeometry(1170,600,200,150)
-        QLabel("Enter your Serial Port:",self).setGeometry(1170,320,200,30)
-        self.rf_port_edit.setGeometry(1170,350,200,30)
+        self.start_button.setGeometry(*ws.start_geometry)
+        self.stop_button.setGeometry(*ws.stop_geometry)
+        self.port_text.setGeometry(*ws.port_text_geometry)
+        self.rf_port_edit.setGeometry(*ws.port_edit_geometry)
+        self.guide_text.setGeometry(*ws.cmd_geometry)
         
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
-        self.graphviewr = GraphViewer_Thread(self,datahub)
+        self.graphviewer = GraphViewer_Thread(self,datahub)
         self.mapviewer.start()
-        self.graphviewr.start()
+        self.graphviewer.start()
 
     # Run when start button is clicked
     def start_button_clicked(self):
@@ -274,7 +350,40 @@ class MainWindow(QMainWindow):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.rf_port_edit.setEnabled(False)     
-        
+        self.result_window()
+
+    #curve hide check box is clicked
+    def roll_hide_checkbox_state(self,state):
+        self.graphviewer.curve_roll.setVisible(state != Qt.Checked)
+    def pitch_hide_checkbox_state(self,state):
+        self.graphviewer.curve_pitch.setVisible(state != Qt.Checked)
+    def yaw_hide_checkbox_state(self,state):
+        self.graphviewer.curve_yaw.setVisible(state != Qt.Checked)
+    def rollspeed_hide_checkbox_state(self,state):
+        self.graphviewer.curve_rollSpeed.setVisible(state != Qt.Checked)
+    def pitchspeed_hide_checkbox_state(self,state):
+        self.graphviewer.curve_pitchSpeed.setVisible(state != Qt.Checked)
+    def yawspeed_hide_checkbox_state(self,state):
+        self.graphviewer.curve_yawSpeed.setVisible(state != Qt.Checked)
+    def xacc_hide_checkbox_state(self,state):
+        self.graphviewer.curve_xaccel.setVisible(state != Qt.Checked)
+    def yacc_hide_checkbox_state(self,state):
+        self.graphviewer.curve_yaccel.setVisible(state != Qt.Checked)
+    def zacc_hide_checkbox_state(self,state):
+        self.graphviewer.curve_zaccel.setVisible(state != Qt.Checked)
+
+    def result_window(self):
+        self.resultwindow = QMainWindow()
+        self.resultwindow.resize(440,440)
+        self.pw_altitude = PlotWidget(self.resultwindow)
+        self.pw_altitude_timeline = self.datahub.hours * 3600 + self.datahub.mins * 60 + self.datahub.secs + self.datahub.tenmilis*0.01 
+        self.pw_altitude_timeline -= self.pw_altitude_timeline[0]
+        self.pw_altitude.plot(self.pw_altitude_timeline,self.datahub.altitude ,pen = "r", name = "Altitude")
+        self.pw_altitude.setGeometry(20,20,400,400)
+        self.resultwindow.show()
+
+
+
     # Main Window start method
     def start(self):
         self.show()
