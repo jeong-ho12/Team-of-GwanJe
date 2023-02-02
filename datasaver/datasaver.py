@@ -26,7 +26,7 @@ class DataSaver:
                 
     def save_data(self):
         while self.datahub.isdatasaver_start:
-            lineRemain = len(self.datahub.altitude) - self.saverows
+            lineRemain = len(self.datahub.speed) - self.saverows
             if lineRemain > 0:
                 data = vstack((self.datahub.hours[self.saverows:self.saverows+lineRemain],
                                   self.datahub.mins[self.saverows:self.saverows+lineRemain],
