@@ -43,7 +43,8 @@ class DataSaver:
                                   self.datahub.Zaccels[self.saverows:self.saverows+lineRemain],
                                   self.datahub.latitudes[self.saverows:self.saverows+lineRemain],
                                   self.datahub.longitudes[self.saverows:self.saverows+lineRemain],
-                                  self.datahub.altitude[self.saverows:self.saverows+lineRemain]))
+                                  self.datahub.altitude[self.saverows:self.saverows+lineRemain],
+                                  self.datahub.speed[self.saverows:self.saverows+lineRemain]))
 
                 for i in range(lineRemain):
                     self.writer.writerow(data[:,i],)

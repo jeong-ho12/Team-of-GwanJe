@@ -42,18 +42,16 @@ class Master:
         self.datasaver.daemon = True
         self.receiver.daemon = True
         
-        
-    def run(self, isDatasaver, isReceiver):
+    def run(self):
 
-        if isReceiver: self.receiver.start()
-        if isDatasaver: self.datasaver.start()
+        self.receiver.start()
+        self.datasaver.start()
 
         self.mainWindow.start() 
+        
         self.mainWindow.setEventLoop()
 
 if __name__ == "__main__":
     master = Master()
 
-    master.run(isDatasaver=1,
-               isReceiver=1
-               )
+    master.run()

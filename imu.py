@@ -20,9 +20,9 @@ class ImuRead:
 
         self.header_pass = 0
         self.index = 0
-        self.raw_imu = np.zeros(55)
+        self.raw_imu = np.zeros(66)
         self.raw_imu = self.raw_imu.astype(int)
-        self.status = np.zeros(14)
+        self.status = np.zeros(13)
 
         self.num = 0
         self.sum = 0
@@ -47,12 +47,12 @@ class ImuRead:
                 self.index = 2
                 self.header_pass = 1
 
-            elif self.header_pass == 1 and self.index < 55:
+            elif self.header_pass == 1 and self.index < 66:
 
                 self.raw_imu[self.index] = data
                 self.index += 1
 
-            elif self.header_pass == 1 and self.index >= 55:
+            elif self.header_pass == 1 and self.index >= 66:
                 
                 # Decode and send datas
                 self.decode_raw()
@@ -91,6 +91,7 @@ class ImuRead:
         longitude = (self.raw_imu[49] << 24 | self.raw_imu[48] << 16 | self.raw_imu[47] << 8 | self.raw_imu[46])
         latitude  = (self.raw_imu[53] << 24 | self.raw_imu[52] << 16 | self.raw_imu[51] << 8 | self.raw_imu[50])
 
+        speed = (self.raw_imu[64] << 24 | self.raw_imu[63] << 16 | self.raw_imu[62] << 8 | self.raw_imu[61])/1000*3.6
         longitude = longitude//10000000 + (longitude%10000000/6000000)
         latitude  = latitude//10000000 + (latitude%10000000/6000000)
 
@@ -101,7 +102,7 @@ class ImuRead:
         strt_list = [now.strftime("%H"), now.strftime("%M"), now.strftime("%S"), now.strftime("%f")[:-4]]
         time_list = np.array(list(map(float, strt_list)))
 
-        self.status = np.array([roll,pitch,yaw,wx,wy,wz,ax,ay,az,latitude,longitude,height])
+        self.status = np.array([roll,pitch,yaw,wx,wy,wz,ax,ay,az,latitude,longitude,height,speed])
         checksum = np.sum(self.status)
         packet = np.hstack((time_list,self.status,checksum))
         
@@ -109,7 +110,7 @@ class ImuRead:
         
         self.ser_rf.write(packed_bytes)
         self.n+=1
-        print(self.n)
+        # print(speed)
         # time.sleep(0.01)
 
 

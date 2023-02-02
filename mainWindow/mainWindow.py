@@ -83,23 +83,23 @@ class GraphViewer_Thread(QThread):
         self.starttime = 0.0
         self.starttime_count = 0
         self.init_sec = 0
-        self.time = zeros(150)
-        self.roll = zeros(150)
-        self.pitch = zeros(150)
-        self.yaw = zeros(150)
-        self.rollSpeed = zeros(150)
-        self.pitchSpeed = zeros(150)
-        self.yawSpeed = zeros(150)
-        self.xaccel = zeros(150)
-        self.yaccel = zeros(150)
-        self.zaccel = zeros(150)
+        self.time = zeros(300)
+        self.roll = zeros(300)
+        self.pitch = zeros(300)
+        self.yaw = zeros(300)
+        self.rollSpeed = zeros(300)
+        self.pitchSpeed = zeros(300)
+        self.yawSpeed = zeros(300)
+        self.xaccel = zeros(300)
+        self.yaccel = zeros(300)
+        self.zaccel = zeros(300)
 
     def update_data(self):
         if len(self.datahub.altitude) == 0:
             pass
 
         else:
-            if len(self.datahub.altitude) <= 150 :
+            if len(self.datahub.altitude) <= 300 :
                 n = len(self.datahub.altitude) 
                 self.roll[-n:] = self.datahub.rolls
                 self.pitch[-n:] = self.datahub.pitchs
@@ -119,19 +119,19 @@ class GraphViewer_Thread(QThread):
                 self.time[-n:] = totaltime - self.starttime
             
             else : 
-                self.roll[:] = self.datahub.rolls[-150:]
-                self.pitch[:] = self.datahub.pitchs[-150:]
-                self.yaw[:] = self.datahub.yaws[-150:]
-                self.rollSpeed[:] = self.datahub.rollSpeeds[-150:]
-                self.pitchSpeed[:] = self.datahub.pitchSpeeds[-150:]
-                self.yawSpeed[:] = self.datahub.yawSpeeds[-150:]
-                self.xaccel[:] = self.datahub.Xaccels[-150:]
-                self.yaccel[:] = self.datahub.Yaccels[-150:]
-                self.zaccel[:] = self.datahub.Zaccels[-150:]
-                hours = self.datahub.hours[-150:] * 3600
-                minutes = self.datahub.mins[-150:] * 60
-                miliseconds = self.datahub.tenmilis[-150:] * 0.01
-                seconds = self.datahub.secs[-150:]
+                self.roll[:] = self.datahub.rolls[-300:]
+                self.pitch[:] = self.datahub.pitchs[-300:]
+                self.yaw[:] = self.datahub.yaws[-300:]
+                self.rollSpeed[:] = self.datahub.rollSpeeds[-300:]
+                self.pitchSpeed[:] = self.datahub.pitchSpeeds[-300:]
+                self.yawSpeed[:] = self.datahub.yawSpeeds[-300:]
+                self.xaccel[:] = self.datahub.Xaccels[-300:]
+                self.yaccel[:] = self.datahub.Yaccels[-300:]
+                self.zaccel[:] = self.datahub.Zaccels[-300:]
+                hours = self.datahub.hours[-300:] * 3600
+                minutes = self.datahub.mins[-300:] * 60
+                miliseconds = self.datahub.tenmilis[-300:] * 0.01
+                seconds = self.datahub.secs[-300:]
                 totaltime = hours + minutes + miliseconds + seconds
                 self.time[:] = totaltime - self.starttime
 
@@ -151,7 +151,7 @@ class GraphViewer_Thread(QThread):
         # to move the timer to the same thread as the QObject
         self.mytimer = QTimer(self)
         self.mytimer.timeout.connect(self.update_data)
-        self.mytimer.start(100)
+        self.mytimer.start(20)
 
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
