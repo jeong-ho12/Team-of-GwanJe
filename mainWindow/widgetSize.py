@@ -19,9 +19,9 @@ pw_angle_geometry = np.array([a*0.07,  b*0.04,  a*0.3,  b*0.28]).astype(int)
 pw_angleSpeed_geometry = np.array([a*0.07,  b*0.36,  a*0.3,  b*0.28]).astype(int)
 pw_accel_geometry = np.array([a*0.07,  b*0.68,  a*0.3,  b*0.28]).astype(int)
 
-angle_title_geometry = np.array([a*0.15, b*0.015, 130, 30]).astype(int)
-angleSpeed_title_geometry = np.array([a*0.15, b*0.335, 160, 30]).astype(int)
-accel_title_geometry = np.array([a*0.15, b*0.655, 150, 30]).astype(int)
+angle_title_geometry = np.array([a*0.15, b*0.015, 200, 30]).astype(int)
+angleSpeed_title_geometry = np.array([a*0.15, b*0.335, 200, 30]).astype(int)
+accel_title_geometry = np.array([a*0.15, b*0.655, 200, 30]).astype(int)
 
 # checker geometry
 roll_checker_geomoetry = np.array([a*0.02,  b*0.07,  100,  50]).astype(int)
@@ -40,12 +40,12 @@ az_checker_geomoetry = np.array([a*0.02,  b*0.79,  100,  30]).astype(int)
 map_geometry = np.array([a*0.41,  b*0.04,  a*0.3,  a*0.3]).astype(int)
 
 # serial port editer geometry
-port_text_geometry = np.array([a*0.41,  a*0.26+b*0.132, a*0.03, a*0.01125]).astype(int)
-port_edit_geometry = np.array([a*0.445,  a*0.26+b*0.132,  a*0.08, a*0.01125]).astype(int)
+port_text_geometry = np.array([a*0.41,  a*0.26+b*0.132, a*0.04, a*0.01125]).astype(int)
+port_edit_geometry = np.array([a*0.46,  a*0.26+b*0.132,  a*0.06, a*0.01125]).astype(int)
 
 # serial baudrate editer geometry
-baudrate_text_geometry = np.array([a*0.41,  a*0.28+b*0.132, a*0.03, a*0.01125]).astype(int)
-baudrate_edit_geometry = np.array([a*0.445,  a*0.28+b*0.132,  a*0.08, a*0.01125]).astype(int)
+baudrate_text_geometry = np.array([a*0.41,  a*0.28+b*0.132, a*0.04, a*0.01125]).astype(int)
+baudrate_edit_geometry = np.array([a*0.46,  a*0.28+b*0.132,  a*0.06, a*0.01125]).astype(int)
 
 # start/stop button geometry
 start_geometry = np.array([a*0.41,  0.132*b+0.3*a,  0.12*a,  0.12*a ]).astype(int)
@@ -54,13 +54,14 @@ status_geometry = np.array([a*0.41,  0.14*b+0.42*a, 0.3*a, 35]).astype(int)
 
 # 
 model_geometry = np.array([a*0.75,  b*0.04,  a*0.2, a*0.3]).astype(int)
-speed_label_geometry = np.array([a*0.8, 0.04*b+0.26*a, 100,30]).astype(int)
+speed_label_geometry = np.array([a*0.8, 0.04*b+0.26*a, 250,30]).astype(int)
 
 # 
-cmd_geometry = np.array([a*0.74, 0.26*a+0.132*b,  a*0.22,  0.17*a]).astype(int)
+cmd_geometry = np.array([a*0.74, 0.24*a+0.132*b,  a*0.22,  0.17*a]).astype(int)
 
 # 
 irri_logo_geometry = np.array([a*0.87, 0.93*b,  a*0.1,  0.05*b]).astype(int)
+
 # all fonts
 font_portText = QFont()
 font_portText.setPointSize(11)
@@ -72,7 +73,7 @@ checker_font = QFont()
 checker_font.setPointSize(12)
 
 font_guideText = QFont()
-font_guideText.setPointSize(13)
+font_guideText.setPointSize(10)
 
 font_angle_title = QFont()
 font_angle_title.setPointSize(15)

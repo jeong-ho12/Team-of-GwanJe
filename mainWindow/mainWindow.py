@@ -34,7 +34,7 @@ class GraphViewer_Thread(QThread):
         
 
         self.accel_title = QLabel(self.mainwindow)
-        self.accel_title.setText("<b>&#8226; Angle Speed</b>")
+        self.accel_title.setText("<b>&#8226; Accel</b>")
         self.pw_accel = PlotWidget(self.mainwindow)
         
         
@@ -309,9 +309,11 @@ class RocketViewer_Thread(QThread):
             pass
         else:
             self.ax.cla()
+            self.ax.set_facecolor('#a0a0a0')
+            self.ax.axis('off')
             quat = self.quaternion_from_euler(self.datahub.rolls[-1], self.datahub.pitchs[-1],  self.datahub.yaws[-1])
             result = self.quaternion_rotate_vector(quat, self.pose)
-            self.ax.quiver(0,0,0, result[2], result[1], result[0])
+            self.ax.quiver(0,0,0, result[2], result[1], result[0],length = 1.5, lw=2, color='black')
             self.ax.set_xlim([-1,1])
             self.ax.set_ylim([-1,1])
             self.ax.set_zlim([-1,1])
@@ -332,9 +334,12 @@ class MainWindow(QMainWindow):
         self.datahub = datahub
         self.resize(*ws.full_size)
         self.setWindowTitle('I-link')
-        self.setWindowIcon(QIcon('logo.ico'))
         self.setStyleSheet(ws.mainwindow_color)
 
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        file_path = os.path.join(dir_path, 'logo.ico')
+        self.setWindowIcon(QIcon(file_path))
 
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self)
@@ -343,10 +348,10 @@ class MainWindow(QMainWindow):
         self.rf_port_edit = QLineEdit("COM8",self)
         self.port_text = QLabel("Port:",self)
         self.baudrate_edit = QLineEdit("115200",self)
-        self.baudrate_text = QLabel("Baudrate",self)
+        self.baudrate_text = QLabel("Baudrate:",self)
         self.guide_text = QLabel(ws.guide,self)
         self.irri_logo = QLabel(self)
-        self.irri_logo.setPixmap(QPixmap("logo.ico").scaled(200, 150, Qt.KeepAspectRatio))
+        self.irri_logo.setPixmap(QPixmap(file_path).scaled(200, 150, Qt.KeepAspectRatio))
         self.irri_logo.setGeometry(*ws.irri_logo_geometry)
 
         self.start_button.setFont(ws.font_start_text)
@@ -498,14 +503,17 @@ class MainWindow(QMainWindow):
         self.graphviewer.curve_zaccel.setVisible(state != Qt.Checked)
 
     def result_window(self):
-        self.resultwindow = QMainWindow()
-        self.resultwindow.resize(440,440)
-        self.pw_altitude = PlotWidget(self.resultwindow)
-        self.pw_altitude_timeline = self.datahub.hours * 3600 + self.datahub.mins * 60 + self.datahub.secs + self.datahub.tenmilis*0.01 
-        self.pw_altitude_timeline -= self.pw_altitude_timeline[0]
-        self.pw_altitude.plot(self.pw_altitude_timeline,self.datahub.altitude ,pen = "r", name = "Altitude")
-        self.pw_altitude.setGeometry(20,20,400,400)
-        self.resultwindow.show()
+        if len(self.datahub.speed) == 0:
+            pass
+        else:
+            self.resultwindow = QMainWindow()
+            self.resultwindow.resize(440,440)
+            self.pw_altitude = PlotWidget(self.resultwindow)
+            self.pw_altitude_timeline = self.datahub.hours * 3600 + self.datahub.mins * 60 + self.datahub.secs + self.datahub.tenmilis*0.01 
+            self.pw_altitude_timeline -= self.pw_altitude_timeline[0]
+            self.pw_altitude.plot(self.pw_altitude_timeline,self.datahub.altitude ,pen = "r", name = "Altitude")
+            self.pw_altitude.setGeometry(20,20,400,400)
+            self.resultwindow.show()
 
 
 
