@@ -1,12 +1,15 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QMdiSubWindow
 from PyQt5.QtCore import QThread, QUrl, QTimer, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtGui import QFont
-
+from PyQt5.QtGui import QFont, QIcon, QPixmap
 import sys, os
 from pyqtgraph import PlotWidget, GridItem
-from numpy import empty, zeros
+from numpy import empty, zeros, array, dot, multiply ,sin, cos, deg2rad
 from . import widgetSize as ws
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class GraphViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
@@ -18,17 +21,23 @@ class GraphViewer_Thread(QThread):
         self.view.load(QUrl())
         self.view.setGeometry(*ws.webEngine_geometry)
         
-        self.pw_angle = PlotWidget(self.mainwindow)
         self.angle_title = QLabel(self.mainwindow)
         self.angle_title.setText("<b>&#8226; Angle</b>")
+        self.pw_angle = PlotWidget(self.mainwindow)
+        
+        
 
-        self.pw_angleSpeed = PlotWidget(self.mainwindow)
         self.angleSpeed_title = QLabel(self.mainwindow)
         self.angleSpeed_title.setText("<b>&#8226; Angle Speed</b>")
+        self.pw_angleSpeed = PlotWidget(self.mainwindow)
+        
+        
 
-        self.pw_accel = PlotWidget(self.mainwindow)
         self.accel_title = QLabel(self.mainwindow)
         self.accel_title.setText("<b>&#8226; Angle Speed</b>")
+        self.pw_accel = PlotWidget(self.mainwindow)
+        
+        
 
         self.pw_angle.setGeometry(*ws.pw_angle_geometry)
 
@@ -83,24 +92,26 @@ class GraphViewer_Thread(QThread):
         self.starttime = 0.0
         self.starttime_count = 0
         self.init_sec = 0
-        self.time = zeros(300)
-        self.roll = zeros(300)
-        self.pitch = zeros(300)
-        self.yaw = zeros(300)
-        self.rollSpeed = zeros(300)
-        self.pitchSpeed = zeros(300)
-        self.yawSpeed = zeros(300)
-        self.xaccel = zeros(300)
-        self.yaccel = zeros(300)
-        self.zaccel = zeros(300)
+
+        self.x_ran = 500
+        self.time = zeros(self.x_ran)
+        self.roll = zeros(self.x_ran)
+        self.pitch = zeros(self.x_ran)
+        self.yaw = zeros(self.x_ran)
+        self.rollSpeed = zeros(self.x_ran)
+        self.pitchSpeed = zeros(self.x_ran)
+        self.yawSpeed = zeros(self.x_ran)
+        self.xaccel = zeros(self.x_ran)
+        self.yaccel = zeros(self.x_ran)
+        self.zaccel = zeros(self.x_ran)
 
     def update_data(self):
-        if len(self.datahub.altitude) == 0:
+        if len(self.datahub.speed) == 0:
             pass
 
         else:
-            if len(self.datahub.altitude) <= 300 :
-                n = len(self.datahub.altitude) 
+            if len(self.datahub.speed) <= self.x_ran :
+                n = len(self.datahub.speed) 
                 self.roll[-n:] = self.datahub.rolls
                 self.pitch[-n:] = self.datahub.pitchs
                 self.yaw[-n:] = self.datahub.yaws
@@ -119,19 +130,19 @@ class GraphViewer_Thread(QThread):
                 self.time[-n:] = totaltime - self.starttime
             
             else : 
-                self.roll[:] = self.datahub.rolls[-300:]
-                self.pitch[:] = self.datahub.pitchs[-300:]
-                self.yaw[:] = self.datahub.yaws[-300:]
-                self.rollSpeed[:] = self.datahub.rollSpeeds[-300:]
-                self.pitchSpeed[:] = self.datahub.pitchSpeeds[-300:]
-                self.yawSpeed[:] = self.datahub.yawSpeeds[-300:]
-                self.xaccel[:] = self.datahub.Xaccels[-300:]
-                self.yaccel[:] = self.datahub.Yaccels[-300:]
-                self.zaccel[:] = self.datahub.Zaccels[-300:]
-                hours = self.datahub.hours[-300:] * 3600
-                minutes = self.datahub.mins[-300:] * 60
-                miliseconds = self.datahub.tenmilis[-300:] * 0.01
-                seconds = self.datahub.secs[-300:]
+                self.roll[:] = self.datahub.rolls[-self.x_ran:]
+                self.pitch[:] = self.datahub.pitchs[-self.x_ran:]
+                self.yaw[:] = self.datahub.yaws[-self.x_ran:]
+                self.rollSpeed[:] = self.datahub.rollSpeeds[-self.x_ran:]
+                self.pitchSpeed[:] = self.datahub.pitchSpeeds[-self.x_ran:]
+                self.yawSpeed[:] = self.datahub.yawSpeeds[-self.x_ran:]
+                self.xaccel[:] = self.datahub.Xaccels[-self.x_ran:]
+                self.yaccel[:] = self.datahub.Yaccels[-self.x_ran:]
+                self.zaccel[:] = self.datahub.Zaccels[-self.x_ran:]
+                hours = self.datahub.hours[-self.x_ran:] * 3600
+                minutes = self.datahub.mins[-self.x_ran:] * 60
+                miliseconds = self.datahub.tenmilis[-self.x_ran:] * 0.01
+                seconds = self.datahub.secs[-self.x_ran:]
                 totaltime = hours + minutes + miliseconds + seconds
                 self.time[:] = totaltime - self.starttime
 
@@ -151,7 +162,7 @@ class GraphViewer_Thread(QThread):
         # to move the timer to the same thread as the QObject
         self.mytimer = QTimer(self)
         self.mytimer.timeout.connect(self.update_data)
-        self.mytimer.start(20)
+        self.mytimer.start(100)
 
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
@@ -224,15 +235,107 @@ class MapViewer_Thread(QThread):
         self.view.loadFinished.connect(self.on_load_finished)
 
 
+class RocketViewer_Thread(QThread):
+    def __init__(self,mainwindow, datahub):
+        super().__init__()
+        self.mainwindow = mainwindow
+        self.datahub = datahub
+        self.pose = array([1.0, 0.0, 0.0])
+        self.view = QWebEngineView(self.mainwindow)
+        self.view.load(QUrl())
+        self.view.setGeometry(*ws.model_geometry)
+        
+
+        self.fig = plt.figure(facecolor='#a0a0a0')
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.setParent(self.mainwindow)
+        self.canvas.setGeometry(*ws.model_geometry)
+
+        self.speed_label = QLabel("Speed : ",self.mainwindow)
+        self.speed_label.setGeometry(*ws.speed_label_geometry)
+        self.speed_label.setFont(ws.font_speed_text)
+
+
+        self.fig.clear()
+        self.ax = self.fig.add_subplot(111, projection = '3d', facecolor='#a0a0a0')
+        self.ax.set_xlim([-1,1])
+        self.ax.set_ylim([-1,1])
+        self.ax.set_zlim([-1,1])
+        self.ax.axis('off')
+        self.ax.quiver(0, 0, 0, self.pose[0],self.pose[1],self.pose[2],length = 1.5, lw=2, color='black')
+
+    def on_load_finished(self):
+        self.mytimer = QTimer(self)
+        self.mytimer.timeout.connect(self.update_pose)
+        self.mytimer.start(100)
+    
+    def quaternion_from_euler(self, x, y, z):
+        x = deg2rad(x) / 2
+        y = deg2rad(y) / 2
+        z = deg2rad(z) / 2
+
+        cx = cos(x)
+        cy = cos(y)
+        cz = cos(z)
+
+        sx = sin(x)
+        sy = sin(y)
+        sz = sin(z)
+
+        qw = cx * cy * cz + sx * sy * sz
+        qx = sx * cy * cz - cx * sy * sz
+        qy = cx * sy * cz + sx * cy * sz
+        qz = cx * cy * sz - sx * sy * cz
+
+        return array([qw, qx, qy, qz])
+
+    def quaternion_rotate_vector(self, quat, vec):
+        qw, qx, qy, qz = quat
+        x, y, z = vec
+
+        ix = qw * x + qy * z - qz * y
+        iy = qw * y + qz * x - qx * z
+        iz = qw * z + qx * y - qy * x
+        iw = -qx * x - qy * y - qz * z
+
+        x = ix * qw + iw * -qx + iy * -qz - iz * -qy
+        y = iy * qw + iw * -qy + iz * -qx - ix * -qz
+        z = iz * qw + iw * -qz + ix * -qy - iy * -qx
+
+        return array([x, y, z])
+
+    def update_pose(self):
+        if len(self.datahub.speed) == 0:
+            pass
+        else:
+            self.ax.cla()
+            quat = self.quaternion_from_euler(self.datahub.rolls[-1], self.datahub.pitchs[-1],  self.datahub.yaws[-1])
+            result = self.quaternion_rotate_vector(quat, self.pose)
+            self.ax.quiver(0,0,0, result[2], result[1], result[0])
+            self.ax.set_xlim([-1,1])
+            self.ax.set_ylim([-1,1])
+            self.ax.set_zlim([-1,1])
+            self.ax.set_xlabel("pitch")
+            self.ax.set_ylabel("yaw")
+            self.ax.set_zlabel("roll")  
+            self.speed_label.setText('Speed : {:.2f} m/s'.format(self.datahub.speed[-1]))
+            self.canvas.draw()
+
+    def run(self):
+        self.view.loadFinished.connect(self.on_load_finished)  
+
 class MainWindow(QMainWindow):
     def __init__(self, datahub):
         self.app = QApplication(sys.argv)
         super().__init__()
-
+        # self.windowTitle.setStyleSheet("")
         self.datahub = datahub
         self.resize(*ws.full_size)
-        self.setStyleSheet("QMainWindow { background-color: rgb(250, 250, 250);}")
-        
+        self.setWindowTitle('I-link')
+        self.setWindowIcon(QIcon('logo.ico'))
+        self.setStyleSheet(ws.mainwindow_color)
+
+
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self)
         self.stop_button = QPushButton("Stop",self)
@@ -242,16 +345,21 @@ class MainWindow(QMainWindow):
         self.baudrate_edit = QLineEdit("115200",self)
         self.baudrate_text = QLabel("Baudrate",self)
         self.guide_text = QLabel(ws.guide,self)
+        self.irri_logo = QLabel(self)
+        self.irri_logo.setPixmap(QPixmap("logo.ico").scaled(200, 150, Qt.KeepAspectRatio))
+        self.irri_logo.setGeometry(*ws.irri_logo_geometry)
 
         self.start_button.setFont(ws.font_start_text)
         self.stop_button.setFont(ws.font_stop_text)
+        self.rf_port_edit.setStyleSheet("background-color: rgb(250,250,250);")
+        self.baudrate_edit.setStyleSheet("background-color: rgb(250,250,250);")
         self.start_button.setStyleSheet("background-color: rgb(30,30,100); color: rgb(250, 250, 250);font-weight: bold;")
-        self.stop_button.setStyleSheet("background-color: rgb(150,30,30); color: rgb(250, 250, 250);font-weight: bold;")
+        self.stop_button.setStyleSheet("background-color: rgb(150,30,30); color: rgb(250, 250, 250);font-weight: bold;border: none;")
 
         shadow_start_button = QGraphicsDropShadowEffect()
         shadow_stop_button = QGraphicsDropShadowEffect()
-        shadow_start_button.setOffset(8)
-        shadow_stop_button.setOffset(8)
+        shadow_start_button.setOffset(6)
+        shadow_stop_button.setOffset(6)
         self.start_button.setGraphicsEffect(shadow_start_button)
         self.stop_button.setGraphicsEffect(shadow_stop_button)
         self.baudrate_text.setFont(ws.font_baudrate)
@@ -330,8 +438,10 @@ class MainWindow(QMainWindow):
         """Set Viewer Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
         self.graphviewer = GraphViewer_Thread(self,datahub)
+        self.rocketviewer = RocketViewer_Thread(self,datahub)
         self.mapviewer.start()
         self.graphviewer.start()
+        self.rocketviewer.start()
 
     # Run when start button is clicked
     def start_button_clicked(self):

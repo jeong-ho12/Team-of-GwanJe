@@ -10,6 +10,8 @@ b = height
 # a : 가로, b : 세로
 full_size = np.array([a,b]).astype(int)
 
+mainwindow_color = "background-color: rgb(160, 160, 160);"
+
 webEngine_geometry = np.array([a*0.07,  b*0.04,  b*0.04, b*0.04]).astype(int)
 
 # graph geometry
@@ -37,9 +39,6 @@ az_checker_geomoetry = np.array([a*0.02,  b*0.79,  100,  30]).astype(int)
 # 
 map_geometry = np.array([a*0.41,  b*0.04,  a*0.3,  a*0.3]).astype(int)
 
-# 
-model_geometry = np.array([a*0.75,  b*0.04,  a*0.2, a*0.3]).astype(int)
-
 # serial port editer geometry
 port_text_geometry = np.array([a*0.41,  a*0.26+b*0.132, a*0.03, a*0.01125]).astype(int)
 port_edit_geometry = np.array([a*0.445,  a*0.26+b*0.132,  a*0.08, a*0.01125]).astype(int)
@@ -54,14 +53,20 @@ stop_geometry = np.array([a*0.56, a*0.27+b*0.132, 0.15*a, 0.15*a]).astype(int)
 status_geometry = np.array([a*0.41,  0.14*b+0.42*a, 0.3*a, 35]).astype(int)
 
 # 
+model_geometry = np.array([a*0.75,  b*0.04,  a*0.2, a*0.3]).astype(int)
+speed_label_geometry = np.array([a*0.8, 0.04*b+0.26*a, 100,30]).astype(int)
+
+# 
 cmd_geometry = np.array([a*0.74, 0.26*a+0.132*b,  a*0.22,  0.17*a]).astype(int)
 
+# 
+irri_logo_geometry = np.array([a*0.87, 0.93*b,  a*0.1,  0.05*b]).astype(int)
 # all fonts
 font_portText = QFont()
-font_portText.setPointSize(10)
+font_portText.setPointSize(11)
 
 font_baudrate = QFont()
-font_baudrate.setPointSize(10)
+font_baudrate.setPointSize(11)
 
 checker_font = QFont()
 checker_font.setPointSize(12)
@@ -87,14 +92,17 @@ font_stop_text.setPointSize(20)
 font_status_text = QFont()
 font_status_text.setPointSize(11)
 
-start_status = 'Program start. you can push stop button'
-stop_status = 'Program stop. you can push start button'
+font_speed_text = QFont()
+font_speed_text.setPointSize(16)
+
+start_status = 'Program start. you can push the stop button'
+stop_status = 'Program stop. you can push the start button'
 
 guide = """
 1. Enter your serial port in the text box\n
 2. Pust start button\n
-3. Enter your save file name for save datas and \n \t push ok button\n
-3. You can push a check box left the graph to \n \t hide a curve\n
+3. Enter your save file name for save datas and \n     push ok button\n
+3. You can push a check box left the graph to \n     hide a curve\n
 4. You can drag a map or scroll the map to move view\n
 5. All reveiced data is saved in real-time and saved in same folder\n
 6. Push stop button

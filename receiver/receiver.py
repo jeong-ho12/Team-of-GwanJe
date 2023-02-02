@@ -51,7 +51,7 @@ class Receiver(Thread):
                                 bytes_data = self.ser.read(72)
                                 self._decode_data(bytes_data)
                 else:
-                    sleep(0.1)
+                    sleep(0.08)
             except:
                 self.datahub.serial_port_error=1
 
