@@ -4,9 +4,10 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import sys, os
 from pyqtgraph import PlotWidget, GridItem
-from numpy import empty, zeros, array, dot, multiply ,sin, cos, deg2rad
+from numpy import empty, zeros, array, dot, cross, reshape, shape, multiply ,sin, cos, deg2rad
 from . import widgetStyle as ws
-import numpy as np
+from numpy.random import rand
+from numpy.linalg import norm
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -249,6 +250,11 @@ class RocketViewer_Thread(QThread):
         self.mainwindow = mainwindow
         self.datahub = datahub
         self.pose = array([1.0, 0.0, 0.0])
+        self.radius = 0.1
+        self.normal = array([0.0, 0.0, 0.0])
+        self.x = rand(1)
+        self.y = rand(1)
+        self.circle_point = zeros((3,37)) 
         self.view = QWebEngineView(self.mainwindow)
         self.view.load(QUrl())
         self.view.setGeometry(*ws.model_geometry)
@@ -311,6 +317,16 @@ class RocketViewer_Thread(QThread):
         z = iz * qw + iw * -qz + ix * -qy - iy * -qx
 
         return array([x, y, z])
+    
+    def circle_points(self,normal):
+        z = (-normal[0]*self.x - normal[1]*self.y)/normal[2]
+        self.circle_point[:,0] = normal
+        u = array([self.x,self.y,z])/norm([self.x,self.y,z])
+        u = reshape(u,3)
+        n = normal/norm(normal)
+        for i in range(2,37):
+            self.circle_point[:,i] = self.radius * cos(deg2rad(10*i))*u + self.radius * sin(deg2rad(10*i))*(cross(u,n))
+        return self.circle_point
 
     def update_pose(self):
         if len(self.datahub.speed) == 0:
@@ -321,7 +337,11 @@ class RocketViewer_Thread(QThread):
             self.ax.axis('off')
             quat = self.quaternion_from_euler(self.datahub.rolls[-1], self.datahub.pitchs[-1],  self.datahub.yaws[-1])
             result = self.quaternion_rotate_vector(quat, self.pose)
-            self.ax.quiver(0,0,0, result[2], result[1], result[0],length = 1.5, lw=2, color='black')
+            circle_vectors = self.circle_points(result)
+            for i in range(37):
+                rocket_vectors = circle_vectors[:,i] + result
+                self.ax.quiver(circle_vectors[0,i],circle_vectors[1,i],circle_vectors[2,i], rocket_vectors[0], rocket_vectors[1], rocket_vectors[2], lw=1, color='black')
+
             self.ax.set_xlim([-1,1])
             self.ax.set_ylim([-1,1])
             self.ax.set_zlim([-1,1])
@@ -333,7 +353,6 @@ class RocketViewer_Thread(QThread):
 
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)  
-
 
 class MainWindow(PageWindow):
 
@@ -588,6 +607,33 @@ class SubWindow(PageWindow):
         self.gr_angleSpeed.setGeometry(*ws.gr_angleSpeed_geometry)
         self.gr_accel.setGeometry(*ws.gr_accel_geometry)
 
+        self.gr_angle.addItem(GridItem())
+        self.gr_angleSpeed.addItem(GridItem())
+        self.gr_accel.addItem(GridItem())
+
+        self.gr_angle.getPlotItem().getAxis('bottom').setLabel('Time(second)')
+        self.gr_angle.getPlotItem().getAxis('left').setLabel('Degree')
+        self.gr_angleSpeed.getPlotItem().getAxis('bottom').setLabel('Time(second)')
+        self.gr_angleSpeed.getPlotItem().getAxis('left').setLabel('Degree/second')
+        self.gr_accel.getPlotItem().getAxis('bottom').setLabel('Time(second)')
+        self.gr_accel.getPlotItem().getAxis('left').setLabel('g(gravity accel)')
+
+        self.gr_angle.getPlotItem().addLegend()
+        self.gr_angleSpeed.getPlotItem().addLegend()
+        self.gr_accel.getPlotItem().addLegend()
+
+        self.curve_roll = self.gr_angle.plot(pen='r', name = "roll")
+        self.curve_pitch = self.gr_angle.plot(pen='g',name = "pitch")
+        self.curve_yaw = self.gr_angle.plot(pen='b', name = "yaw")
+
+        self.curve_rollSpeed = self.gr_angleSpeed.plot(pen='r', name = "roll speed")
+        self.curve_pitchSpeed = self.gr_angleSpeed.plot(pen='g', name = "pitch speed")
+        self.curve_yawSpeed = self.gr_angleSpeed.plot(pen='b', name = "yaw speed")
+
+        self.curve_xaccel = self.gr_accel.plot(pen='r', name = "x acc")
+        self.curve_yaccel = self.gr_accel.plot(pen='g',name = "y acc")
+        self.curve_zaccel = self.gr_accel.plot(pen='b',name ="z acc")
+
     def initMenubar(self):
         self.statusBar()
 
@@ -603,10 +649,28 @@ class SubWindow(PageWindow):
     def start_analysis(self):
         self.csv_name = self.csv_name_edit.text()
         try:
-            self.file = open(self.datahub.file_Name, 'r', newline='')
-            datas = np.array(self.file.readlines())
-            print(datas)
-            
+            alldata = pd.read_csv("Your File Name.csv").to_numpy()
+            init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
+            timespace = alldata[:,0]*3600+alldata[:,1]*60+alldata[:,2]+alldata[:,3]*0.01 - init_time
+            roll = alldata[:,4]
+            pitch = alldata[:,5]
+            yaw = alldata[:,6]
+
+            rollSpeed = alldata[:,7]
+            pitchSpeed = alldata[:,8]
+            yawSpeed = alldata[:,9]
+
+            xaccel = alldata[:,10]
+            yaccel = alldata[:,11]
+            zaccel = alldata[:,12]
+
+            altitude = alldata[:,15]
+            speed = alldata[:,16]
+
+            self.curve_roll.setData(x=timespace,y=roll)
+            self.curve_pitch.setData(x=timespace,y=pitch)
+            self.curve_yaw.setData(x=timespace,y=yaw)
+
         except:
             QMessageBox.warning(self,"warning","File open error")
 
