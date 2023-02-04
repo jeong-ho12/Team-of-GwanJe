@@ -14,11 +14,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+
 class PageWindow(QMainWindow):
     gotoSignal = pyqtSignal(str)
 
     def goto(self, name):
         self.gotoSignal.emit(name)
+
 
 class GraphViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
