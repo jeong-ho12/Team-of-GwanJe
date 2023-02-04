@@ -2,7 +2,7 @@ from threading import Thread
 
 from datasaver.datasaver import DataSaver
 from receiver.receiver   import Receiver
-from mainWindow.mainWindow import MainWindow
+from mainWindow.mainWindow import window
 from datahub import Datahub
 
 class Thread_Receiver(Thread):
@@ -32,7 +32,7 @@ class Master:
         
         self.datahub = Datahub()
 
-        self.mainWindow = MainWindow(self.datahub)
+        self.mainWindow = window(self.datahub)
 
         self.datasaver = Thread_DataSaver(self.datahub)
 
