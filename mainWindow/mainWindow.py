@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QStackedWidget, QAction, qApp
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QTableWidget, QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QStackedWidget, QAction, qApp
 from PyQt5.QtCore import QThread, QUrl, QTimer, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QFont, QIcon, QPixmap
@@ -256,7 +256,7 @@ class RocketViewer_Thread(QThread):
         self.normal = array([0.0, 0.0, 0.0])
         self.x = rand(1)
         self.y = rand(1)
-        self.circle_point = zeros((3,37)) 
+        self.circle_point = zeros((3,5)) 
         self.view = QWebEngineView(self.mainwindow)
         self.view.load(QUrl())
         self.view.setGeometry(*ws.model_geometry)
@@ -326,8 +326,8 @@ class RocketViewer_Thread(QThread):
         u = array([self.x,self.y,z])/norm([self.x,self.y,z])
         u = reshape(u,3)
         n = normal/norm(normal)
-        for i in range(2,37):
-            self.circle_point[:,i] = self.radius * cos(deg2rad(10*i))*u + self.radius * sin(deg2rad(10*i))*(cross(u,n))
+        for i in range(1,5):
+            self.circle_point[:,i] = self.radius * cos(deg2rad(90*i))*u + self.radius * sin(deg2rad(90*i))*(cross(u,n))
         return self.circle_point
 
     def update_pose(self):
@@ -340,7 +340,8 @@ class RocketViewer_Thread(QThread):
             quat = self.quaternion_from_euler(self.datahub.rolls[-1], self.datahub.pitchs[-1],  self.datahub.yaws[-1])
             result = self.quaternion_rotate_vector(quat, self.pose)
             circle_vectors = self.circle_points(result)
-            for i in range(37):
+            
+            for i in range(5):
                 rocket_vectors = circle_vectors[:,i] + result
                 self.ax.quiver(circle_vectors[0,i],circle_vectors[1,i],circle_vectors[2,i], rocket_vectors[0], rocket_vectors[1], rocket_vectors[2], lw=1, color='black')
 
@@ -364,13 +365,14 @@ class MainWindow(PageWindow):
         self.datahub = datahub
 
         self.initUI()
-        self.initMenubar()
         self.initGraph()
-        
+
         """Start Thread"""
         self.mapviewer = MapViewer_Thread(self,datahub)
         self.graphviewer = GraphViewer_Thread(self,datahub)
         self.rocketviewer = RocketViewer_Thread(self,datahub)
+
+        self.initMenubar()
 
         self.mapviewer.start()
         self.graphviewer.start()
@@ -447,6 +449,7 @@ class MainWindow(PageWindow):
         menubar.setNativeMenuBar(False)
         filemenu = menubar.addMenu('Menu')
         filemenu.addAction(change_Action)
+        self.setStyleSheet("QMenuBar {background-color: rgb(130,130,130);color: rgb(255,255,255);border: 1px solid #000;}")
 
     def initGraph(self):
         self.roll_hide_checkbox = QCheckBox("roll",self)
@@ -579,7 +582,7 @@ class MainWindow(PageWindow):
         self.datahub.datasaver_stop()
         event.accept()
 
-#  Analysis
+#  Analysis1
 class SubWindow(PageWindow):
     def __init__(self,datahub):
         super().__init__()
@@ -592,26 +595,80 @@ class SubWindow(PageWindow):
     def initUI(self):
         self.csv_name_edit = QLineEdit("{}".format(self.datahub.file_Name),self)
         self.analysis_button = QPushButton("Analysis", self)
+        self.analysis_angular_button = QPushButton("Angular Data Analysis", self)
+        self.analysis_alnsp_button = QPushButton("Altitude & Speed Analysis", self)
+        self.max_altitude_label = QLabel("Max. altitude",self)
+        self.max_speed_label = QLabel("Max. speed",self)
+        self.max_accel_label = QLabel("Max. acceleration", self)
+
+        self.max_altitude_label.setStyleSheet("font-weight: bold;")
+        self.max_speed_label.setStyleSheet("font-weight: bold;")
+        self.max_accel_label.setStyleSheet("font-weight: bold;")
+
+        self.max_altitude = QLabel("0 ",self)
+        self.max_speed = QLabel("0 ",self)
+        self.max_accel = QLabel("0 ", self)
+
+        self.max_altitude.setStyleSheet("font-weight: bold;")
+        self.max_speed.setStyleSheet("font-weight: bold;")
+        self.max_accel.setStyleSheet("font-weight: bold;")
+        self.analysis_button.setStyleSheet("font-weight: bold;")
+        self.analysis_angular_button.setStyleSheet("font-weight: bold;")
+        self.analysis_alnsp_button.setStyleSheet("font-weight: bold;")
 
         self.csv_name_edit.setGeometry(*ws.csv_name_geometry)
         self.analysis_button.setGeometry(*ws.analysis_button_geometry)
+        self.analysis_angular_button.setGeometry(*ws.analysis_angular_button_geometry)
+        self.analysis_alnsp_button.setGeometry(*ws.analysis_alnsp_button_geometry)
+
+        self.max_altitude_label.setGeometry(*ws.max_altitude_label_geometry)
+        self.max_speed_label.setGeometry(*ws.max_speed_label_geometry)
+        self.max_accel_label.setGeometry(*ws.max_accel_label_geometry)
+
+        self.max_altitude.setGeometry(*ws.max_altitude_geometry)
+        self.max_speed.setGeometry(*ws.max_speed_geometry)
+        self.max_accel.setGeometry(*ws.max_accel_geometry)
+
+        self.max_altitude_label.setFont(ws.font_max_alti_label_text)
+        self.max_speed_label.setFont(ws.font_max_speed_label_text)
+        self.max_accel_label.setFont(ws.font_max_accel_label_text)
+
+        self.max_altitude.setFont(ws.font_max_alti_text)
+        self.max_speed.setFont(ws.font_max_speed_text)
+        self.max_accel.setFont(ws.font_max_accel_text)
 
         self.csv_name_edit.setStyleSheet("background-color: rgb(250,250,250);")
 
         self.analysis_button.clicked.connect(self.start_analysis)
+        self.analysis_angular_button.clicked.connect(self.start_angularGraph)
+        self.analysis_alnsp_button.clicked.connect(self.start_alnspGraph)
+
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        file_path_logo = os.path.join(dir_path, 'logo3.png')
+
+        self.irri_logo = QLabel(self)
+        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(300, 250, Qt.KeepAspectRatio))
+        self.irri_logo.setGeometry(*ws.irri_logo_geometry)  
 
     def initGraph(self):
         self.gr_angle = PlotWidget(self)
         self.gr_angleSpeed = PlotWidget(self)
         self.gr_accel = PlotWidget(self)
+        self.gr_altitude = PlotWidget(self)
+        self.gr_speed = PlotWidget(self)
 
         self.gr_angle.setGeometry(*ws.gr_angle_geometry)
         self.gr_angleSpeed.setGeometry(*ws.gr_angleSpeed_geometry)
         self.gr_accel.setGeometry(*ws.gr_accel_geometry)
+        self.gr_altitude.setGeometry(*ws.gr_angle_geometry)
+        self.gr_speed.setGeometry(*ws.gr_angleSpeed_geometry)
 
         self.gr_angle.addItem(GridItem())
         self.gr_angleSpeed.addItem(GridItem())
         self.gr_accel.addItem(GridItem())
+        self.gr_altitude.addItem(GridItem())
+        self.gr_speed.addItem(GridItem())
 
         self.gr_angle.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_angle.getPlotItem().getAxis('left').setLabel('Degree')
@@ -619,10 +676,16 @@ class SubWindow(PageWindow):
         self.gr_angleSpeed.getPlotItem().getAxis('left').setLabel('Degree/second')
         self.gr_accel.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_accel.getPlotItem().getAxis('left').setLabel('g(gravity accel)')
+        self.gr_altitude.getPlotItem().getAxis('bottom').setLabel('Time(second)')
+        self.gr_altitude.getPlotItem().getAxis('left').setLabel('Altitude')
+        self.gr_speed.getPlotItem().getAxis('bottom').setLabel('Time(second)')
+        self.gr_speed.getPlotItem().getAxis('left').setLabel('Speed')
 
         self.gr_angle.getPlotItem().addLegend()
         self.gr_angleSpeed.getPlotItem().addLegend()
         self.gr_accel.getPlotItem().addLegend()
+        self.gr_altitude.getPlotItem().addLegend()
+        self.gr_speed.getPlotItem().addLegend()
 
         self.curve_roll = self.gr_angle.plot(pen='r', name = "roll")
         self.curve_pitch = self.gr_angle.plot(pen='g',name = "pitch")
@@ -636,22 +699,52 @@ class SubWindow(PageWindow):
         self.curve_yaccel = self.gr_accel.plot(pen='g',name = "y acc")
         self.curve_zaccel = self.gr_accel.plot(pen='b',name ="z acc")
 
+        self.curve_altitude = self.gr_altitude.plot(pen='r', name = "altitude")
+
+        self.curve_speed = self.gr_speed.plot(pen='r', name = "speed")
+
+        self.gr_altitude.hide()
+        self.gr_speed.hide()
+        self.analysis_angular_button.setEnabled(False)
+        self.analysis_alnsp_button.setEnabled(True)
+
+    def start_angularGraph(self):
+        self.gr_altitude.hide()
+        self.gr_speed.hide()
+        self.gr_angle.show()
+        self.gr_angleSpeed.show()
+        self.gr_accel.show()
+        self.analysis_angular_button.setEnabled(False)
+        self.analysis_alnsp_button.setEnabled(True)
+
+        
+    def start_alnspGraph(self):
+            self.gr_angle.hide()
+            self.gr_angleSpeed.hide()
+            self.gr_accel.hide()
+            self.gr_altitude.show()
+            self.gr_speed.show()
+            self.analysis_angular_button.setEnabled(True)
+            self.analysis_alnsp_button.setEnabled(False)
+
     def initMenubar(self):
         self.statusBar()
 
-        change_Action = QAction('Analysis', self)
+        change_Action = QAction('Real-Time Viewer', self)
         change_Action.setShortcut('Ctrl+L')
         change_Action.triggered.connect(self.gomain)
 
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
+        self.setStyleSheet("QMenuBar {background-color: rgb(130,130,130);color: rgb(255,255,255);border: 1px solid #000;}")
+
         filemenu = menubar.addMenu('Menu')
         filemenu.addAction(change_Action)
 
     def start_analysis(self):
         self.csv_name = self.csv_name_edit.text()
         try:
-            alldata = pd.read_csv("Your File Name.csv").to_numpy()
+            alldata = pd.read_csv(self.csv_name).to_numpy()
             init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
             timespace = alldata[:,0]*3600+alldata[:,1]*60+alldata[:,2]+alldata[:,3]*0.01 - init_time
             roll = alldata[:,4]
@@ -665,13 +758,31 @@ class SubWindow(PageWindow):
             xaccel = alldata[:,10]
             yaccel = alldata[:,11]
             zaccel = alldata[:,12]
-
             altitude = alldata[:,15]
             speed = alldata[:,16]
 
             self.curve_roll.setData(x=timespace,y=roll)
             self.curve_pitch.setData(x=timespace,y=pitch)
             self.curve_yaw.setData(x=timespace,y=yaw)
+
+            self.curve_rollSpeed.setData(x=timespace,y=rollSpeed)
+            self.curve_pitchSpeed.setData(x=timespace,y=pitchSpeed)
+            self.curve_yawSpeed.setData(x=timespace,y=yawSpeed)
+
+            self.curve_xaccel.setData(x=timespace,y=xaccel)
+            self.curve_yaccel.setData(x=timespace,y=yaccel)
+            self.curve_zaccel.setData(x=timespace,y=zaccel)
+
+            self.curve_altitude.setData(x=timespace,y=altitude)
+
+            self.curve_speed.setData(x=timespace,y=speed)
+
+            total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
+            self.max_altitude.setText("{:.2f} m".format(max(altitude)))
+            self.max_speed.setText("{:.2f} m/s".format(max(speed)))
+            self.max_accel.setText("{:.2f} g".format(max(total_accel)))
+
+            self.start_angularGraph()
 
         except:
             QMessageBox.warning(self,"warning","File open error")
@@ -699,6 +810,7 @@ class window(QMainWindow):
         file_path = os.path.join(dir_path, 'logo.ico')
         self.setWindowIcon(QIcon(file_path))
 
+
     def initWindows(self):
         self.mainwindow = MainWindow(self.datahub)
         self.subwindow = SubWindow(self.datahub)
@@ -718,6 +830,7 @@ class window(QMainWindow):
 
         if name == "sub":
             self.stacked_widget.setCurrentWidget(self.subwindow)
+            self.subwindow.csv_name_edit.setText("{}".format(self.datahub.file_Name))
 
     def start(self):
         self.show()
