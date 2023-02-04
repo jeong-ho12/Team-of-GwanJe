@@ -8,7 +8,7 @@ a = Analysis(
     ['Master.py'],
     pathex=[],
     binaries=[],
-    datas=[('map.html', '.\\mainWindow'),('logo.ico','.\\mainWindow')],
+    datas=[('map.html', '.\\mainWindow'),('logo.ico','.\\mainWindow'),('logo3.png','.\\mainWindow')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
