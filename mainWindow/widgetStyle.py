@@ -1,6 +1,7 @@
 from pyautogui import size as max_window_size
 from PyQt5.QtGui import QFont
 import numpy as np
+import sys, os
 
 width, height = max_window_size()
 height = int(0.95*height)
@@ -60,7 +61,8 @@ speed_label_geometry = np.array([a*0.8, 0.04*b+0.26*a, 250,30]).astype(int)
 cmd_geometry = np.array([a*0.74, 0.24*a+0.132*b,  a*0.22,  0.17*a]).astype(int)
 
 # 
-irri_logo_geometry = np.array([a*0.87, 0.93*b,  a*0.1,  0.05*b]).astype(int)
+irri_logo_geometry = np.array([a*0.83, 0.89*b,  a*0.15,  0.1*b]).astype(int)
+
 
 # all fonts
 font_portText = QFont()
@@ -108,3 +110,12 @@ guide = """
 5. All reveiced data is saved in real-time and saved in same folder\n
 6. Push stop button
 """
+
+### Sub window ###
+
+csv_name_geometry = np.array([a*0.8, 0.8*b,  a*0.08, a*0.02]).astype(int)
+analysis_button_geometry = np.array([a*0.8, 0.85*b,  a*0.08, a*0.02]).astype(int)
+
+gr_angle_geometry = np.array([a*0.1,  b*0.04,  a*0.6,  b*0.28]).astype(int)
+gr_angleSpeed_geometry = np.array([a*0.1,  b*0.36,  a*0.6,  b*0.28]).astype(int)
+gr_accel_geometry = np.array([a*0.1,  b*0.68,  a*0.6,  b*0.28]).astype(int)

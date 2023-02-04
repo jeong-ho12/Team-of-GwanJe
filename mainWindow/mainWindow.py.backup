@@ -1,23 +1,15 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QStackedWidget, QAction, qApp
-from PyQt5.QtCore import QThread, QUrl, QTimer, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QMdiSubWindow
+from PyQt5.QtCore import QThread, QUrl, QTimer, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import sys, os
 from pyqtgraph import PlotWidget, GridItem
 from numpy import empty, zeros, array, dot, multiply ,sin, cos, deg2rad
 from . import widgetStyle as ws
-import numpy as np
-import pandas as pd
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
-class PageWindow(QMainWindow):
-    gotoSignal = pyqtSignal(str)
-
-    def goto(self, name):
-        self.gotoSignal.emit(name)
 
 class GraphViewer_Thread(QThread):
     def __init__(self, mainwindow,datahub):
@@ -334,28 +326,27 @@ class RocketViewer_Thread(QThread):
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)  
 
-
-class MainWindow(PageWindow):
-
+class MainWindow(QMainWindow):
     def __init__(self, datahub):
+        self.app = QApplication(sys.argv)
         super().__init__()
         # self.windowTitle.setStyleSheet("")
         self.datahub = datahub
+        self.resize(*ws.full_size)
+        self.setWindowTitle('I-link')
+        self.setStyleSheet(ws.mainwindow_color)
 
-        self.initUI()
-        self.initMenubar()
-        self.initGraph()
-        
-        """Start Thread"""
-        self.mapviewer = MapViewer_Thread(self,datahub)
-        self.graphviewer = GraphViewer_Thread(self,datahub)
-        self.rocketviewer = RocketViewer_Thread(self,datahub)
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        file_path = os.path.join(dir_path, 'logo.ico')
+        file_path_logo = os.path.join(dir_path, 'logo3.png')
+        filt_path_background = os.path.join(dir_path, 'background.png')
+        self.setWindowIcon(QIcon(file_path))
 
-        self.mapviewer.start()
-        self.graphviewer.start()
-        self.rocketviewer.start()
-        
-    def initUI(self):
+
+        self.irri_logo = QLabel(self)
+        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(300, 250, Qt.KeepAspectRatio))
+        self.irri_logo.setGeometry(*ws.irri_logo_geometry)
 
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self)
@@ -394,40 +385,7 @@ class MainWindow(PageWindow):
         """Set Buttons Connection"""
         self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.stop_button_clicked)
-
-        """Set Geometry"""
-        self.start_button.setGeometry(*ws.start_geometry)
-        self.stop_button.setGeometry(*ws.stop_geometry)
-        self.port_text.setGeometry(*ws.port_text_geometry)
-        self.rf_port_edit.setGeometry(*ws.port_edit_geometry)
-        self.baudrate_text.setGeometry(*ws.baudrate_text_geometry)
-        self.baudrate_edit.setGeometry(*ws.baudrate_edit_geometry)
-        self.guide_text.setGeometry(*ws.cmd_geometry)
-
-        self.now_status.setGeometry(*ws.status_geometry)
-        self.now_status.setFont(ws.font_status_text)
-
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path_logo = os.path.join(dir_path, 'logo3.png')
-
-        self.irri_logo = QLabel(self)
-        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(300, 250, Qt.KeepAspectRatio))
-        self.irri_logo.setGeometry(*ws.irri_logo_geometry)  
-
-    def initMenubar(self):
-        self.statusBar()
-
-        change_Action = QAction('Analysis', self)
-        change_Action.setShortcut('Ctrl+L')
-        change_Action.triggered.connect(self.gosub)
-
-        menubar = self.menuBar()
-        menubar.setNativeMenuBar(False)
-        filemenu = menubar.addMenu('Menu')
-        filemenu.addAction(change_Action)
-
-    def initGraph(self):
+        
         self.roll_hide_checkbox = QCheckBox("roll",self)
         self.pitch_hide_checkbox = QCheckBox("pitch",self)
         self.yaw_hide_checkbox = QCheckBox("yaw",self)
@@ -474,8 +432,25 @@ class MainWindow(PageWindow):
         self.pitchspeed_hide_checkbox.setFont(ws.checker_font)
         self.yawspeed_hide_checkbox.setFont(ws.checker_font)
 
-    def gosub(self):
-        self.goto("sub")
+        """Set Geometry"""
+        self.start_button.setGeometry(*ws.start_geometry)
+        self.stop_button.setGeometry(*ws.stop_geometry)
+        self.port_text.setGeometry(*ws.port_text_geometry)
+        self.rf_port_edit.setGeometry(*ws.port_edit_geometry)
+        self.baudrate_text.setGeometry(*ws.baudrate_text_geometry)
+        self.baudrate_edit.setGeometry(*ws.baudrate_edit_geometry)
+        self.guide_text.setGeometry(*ws.cmd_geometry)
+
+        self.now_status.setGeometry(*ws.status_geometry)
+        self.now_status.setFont(ws.font_status_text)
+        
+        """Set Viewer Thread"""
+        self.mapviewer = MapViewer_Thread(self,datahub)
+        self.graphviewer = GraphViewer_Thread(self,datahub)
+        self.rocketviewer = RocketViewer_Thread(self,datahub)
+        self.mapviewer.start()
+        self.graphviewer.start()
+        self.rocketviewer.start()
 
     # Run when start button is clicked
     def start_button_clicked(self):
@@ -500,7 +475,6 @@ class MainWindow(PageWindow):
                 self.rf_port_edit.setEnabled(False)
                 self.baudrate_edit.setEnabled(False)
         self.datahub.serial_port_error=-1
-    
     # Run when stop button is clicked
     def stop_button_clicked(self):
         QMessageBox.information(self,"information","Program Stop")
@@ -552,113 +526,16 @@ class MainWindow(PageWindow):
 
             self.resultwindow.show()
 
-    # Run when mainwindow is closed
-    def closeEvent(self, event):
-        self.datahub.communication_stop()
-        self.datahub.datasaver_stop()
-        event.accept()
 
-#  Analysis
-class SubWindow(PageWindow):
-    def __init__(self,datahub):
-        super().__init__()
-        
-        self.datahub = datahub
-        self.initUI()
-        self.initGraph()
-        self.initMenubar()
 
-    def initUI(self):
-        self.csv_name_edit = QLineEdit("{}".format(self.datahub.file_Name),self)
-        self.analysis_button = QPushButton("Analysis", self)
-
-        self.csv_name_edit.setGeometry(*ws.csv_name_geometry)
-        self.analysis_button.setGeometry(*ws.analysis_button_geometry)
-
-        self.csv_name_edit.setStyleSheet("background-color: rgb(250,250,250);")
-
-        self.analysis_button.clicked.connect(self.start_analysis)
-
-    def initGraph(self):
-        self.gr_angle = PlotWidget(self)
-        self.gr_angleSpeed = PlotWidget(self)
-        self.gr_accel = PlotWidget(self)
-
-        self.gr_angle.setGeometry(*ws.gr_angle_geometry)
-        self.gr_angleSpeed.setGeometry(*ws.gr_angleSpeed_geometry)
-        self.gr_accel.setGeometry(*ws.gr_accel_geometry)
-
-    def initMenubar(self):
-        self.statusBar()
-
-        change_Action = QAction('Analysis', self)
-        change_Action.setShortcut('Ctrl+L')
-        change_Action.triggered.connect(self.gomain)
-
-        menubar = self.menuBar()
-        menubar.setNativeMenuBar(False)
-        filemenu = menubar.addMenu('Menu')
-        filemenu.addAction(change_Action)
-
-    def start_analysis(self):
-        self.csv_name = self.csv_name_edit.text()
-        try:
-            self.file = open(self.datahub.file_Name, 'r', newline='')
-            datas = np.array(self.file.readlines())
-            print(datas)
-            
-        except:
-            QMessageBox.warning(self,"warning","File open error")
-
-    def gomain(self):
-        self.goto("main")
-
-class window(QMainWindow):
-    def __init__(self,datahub):
-        self.app = QApplication(sys.argv)
-        super().__init__()
-        self.datahub = datahub
-
-        self.initUI()
-        self.initWindows()
-        self.goto("main")
-
-    def initUI(self):
-        self.resize(*ws.full_size)
-        self.setWindowTitle('I-link')
-        self.setStyleSheet(ws.mainwindow_color) 
-
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path = os.path.join(dir_path, 'logo.ico')
-        self.setWindowIcon(QIcon(file_path))
-
-    def initWindows(self):
-        self.mainwindow = MainWindow(self.datahub)
-        self.subwindow = SubWindow(self.datahub)
-
-        self.stacked_widget = QStackedWidget()
-        self.setCentralWidget(self.stacked_widget)
-        self.stacked_widget.addWidget(self.mainwindow)
-        self.stacked_widget.addWidget(self.subwindow)
-
-        self.mainwindow.gotoSignal.connect(self.goto)
-        self.subwindow.gotoSignal.connect(self.goto)
-
-    @pyqtSlot(str)
-    def goto(self, name):
-        if name == "main":
-            self.stacked_widget.setCurrentWidget(self.mainwindow)
-
-        if name == "sub":
-            self.stacked_widget.setCurrentWidget(self.subwindow)
-
+    # Main Window start method
     def start(self):
         self.show()
         
     def setEventLoop(self):
         sys.exit(self.app.exec_())
-
+        
+    # Run when mainwindow is closed
     def closeEvent(self, event):
         self.datahub.communication_stop()
         self.datahub.datasaver_stop()
