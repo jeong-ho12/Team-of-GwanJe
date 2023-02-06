@@ -212,6 +212,21 @@ class MapViewer_Thread(QThread):
         path = abspath(__file__)
         dir_path = dirname(path)
         file_path = join(dir_path, 'map.html')
+
+        with open(file_path, "r") as file:
+            map_html = file.read()
+        
+        new_width = f"{ws.map_geometry[2]}px"
+        new_height = f"{ws.map_geometry[3]}px"
+        print(new_height)
+        print(new_width)
+        map_html = map_html.replace("width: 550px;", f"width: {new_width};")
+        map_html = map_html.replace("height: 550px;", f"height: {new_height};")
+
+        with open(file_path,"w") as file:
+            file.write(map_html)
+            file.close()
+
         self.view.load(QUrl.fromLocalFile(file_path))
         self.view.show()
 
@@ -359,7 +374,10 @@ class RocketViewer_Thread(QThread):
             result = self.quaternion_rotate_vector(quat, self.pose)
             circle_vectors = self.circle_points(result)
             
-            for i in range(5):
+            print(circle_vectors)
+            self.ax.quiver(0,0,0,2*circle_vectors[0,0],2*circle_vectors[1,0],2*circle_vectors[2,0],lw=0.5, color='red' )
+
+            for i in range(1,5):
                 rocket_vectors = circle_vectors[:,i] + result
                 self.ax.quiver(circle_vectors[0,i],circle_vectors[1,i],circle_vectors[2,i], rocket_vectors[0], rocket_vectors[1], rocket_vectors[2], lw=0.5, color='black')
 
@@ -792,50 +810,50 @@ class SubWindow(PageWindow):
 
     def start_analysis(self):
         self.csv_name = self.csv_name_edit.text()
-        # try:
-        alldata = read_csv(self.csv_name).to_numpy()
-        init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
-        self.timespace = alldata[:,0]*3600000+alldata[:,1]*60000+alldata[:,2]*1000+alldata[:,3]*10
+        try:
+            alldata = read_csv(self.csv_name).to_numpy()
+            init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
+            self.timespace = alldata[:,0]*3600000+alldata[:,1]*60000+alldata[:,2]*1000+alldata[:,3]*10
 
-        roll = alldata[:,4]
-        pitch = alldata[:,5]
-        yaw = alldata[:,6]
+            roll = alldata[:,4]
+            pitch = alldata[:,5]
+            yaw = alldata[:,6]
 
-        rollSpeed = alldata[:,7]
-        pitchSpeed = alldata[:,8]
-        yawSpeed = alldata[:,9]
+            rollSpeed = alldata[:,7]
+            pitchSpeed = alldata[:,8]
+            yawSpeed = alldata[:,9]
 
-        xaccel = alldata[:,10]
-        yaccel = alldata[:,11]
-        zaccel = alldata[:,12]
-        altitude = alldata[:,15]
-        speed = alldata[:,16]
+            xaccel = alldata[:,10]
+            yaccel = alldata[:,11]
+            zaccel = alldata[:,12]
+            altitude = alldata[:,15]
+            speed = alldata[:,16]
 
-        self.curve_roll.setData(x=self.timespace,y=roll)
-        self.curve_pitch.setData(x=self.timespace,y=pitch)
-        self.curve_yaw.setData(x=self.timespace,y=yaw)
+            self.curve_roll.setData(x=self.timespace,y=roll)
+            self.curve_pitch.setData(x=self.timespace,y=pitch)
+            self.curve_yaw.setData(x=self.timespace,y=yaw)
 
-        self.curve_rollSpeed.setData(x=self.timespace,y=rollSpeed)
-        self.curve_pitchSpeed.setData(x=self.timespace,y=pitchSpeed)
-        self.curve_yawSpeed.setData(x=self.timespace,y=yawSpeed)
+            self.curve_rollSpeed.setData(x=self.timespace,y=rollSpeed)
+            self.curve_pitchSpeed.setData(x=self.timespace,y=pitchSpeed)
+            self.curve_yawSpeed.setData(x=self.timespace,y=yawSpeed)
 
-        self.curve_xaccel.setData(x=self.timespace,y=xaccel)
-        self.curve_yaccel.setData(x=self.timespace,y=yaccel)
-        self.curve_zaccel.setData(x=self.timespace,y=zaccel)
+            self.curve_xaccel.setData(x=self.timespace,y=xaccel)
+            self.curve_yaccel.setData(x=self.timespace,y=yaccel)
+            self.curve_zaccel.setData(x=self.timespace,y=zaccel)
 
-        self.curve_altitude.setData(x=self.timespace,y=altitude)
+            self.curve_altitude.setData(x=self.timespace,y=altitude)
 
-        self.curve_speed.setData(x=self.timespace,y=speed)
+            self.curve_speed.setData(x=self.timespace,y=speed)
 
-        total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
-        self.max_altitude.setText("{:.2f} m".format(max(altitude)))
-        self.max_speed.setText("{:.2f} m/s".format(max(speed)))
-        self.max_accel.setText("{:.2f} g".format(max(total_accel)))
+            total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
+            self.max_altitude.setText("{:.2f} m".format(max(altitude)))
+            self.max_speed.setText("{:.2f} m/s".format(max(speed)))
+            self.max_accel.setText("{:.2f} g".format(max(total_accel)))
 
-        self.start_angularGraph()
+            self.start_angularGraph()
 
-        # except:
-        #     QMessageBox.warning(self,"warning","File open error")
+        except:
+            QMessageBox.warning(self,"warning","File open error")
 
     def gomain(self):
         self.goto("main")
