@@ -8,12 +8,9 @@ from time import sleep
 class Receiver(Thread):
     def __init__(self, datahub):
         super().__init__()
-        self.count = 0
         self.datahub = datahub
         self.first_time = True
         self.ser = None
-
-        self.n = 0
 
 
     def setSerial(self,myport,mybaudrate):
@@ -37,21 +34,28 @@ class Receiver(Thread):
         while True:
             try:
                 if self.datahub.iscommunication_start:
-                        if self.first_time:
-                            self.setSerial(self.datahub.mySerialPort,self.datahub.myBaudrate)
-                            self.first_time=False
+                    if self.first_time:
+                        self.setSerial(self.datahub.mySerialPort,self.datahub.myBaudrate)
+                        self.first_time=False
 
-                        self.datahub.serial_port_error=0
-                        header1 = self.ser.read(1)
+                    if not self.ser.is_open:
+                        self.ser.open()
 
-                        if header1 == b'A':
-                            header2 = self.ser.read(1)
+                    self.datahub.serial_port_error=0
+                    header1 = self.ser.read(1)
 
-                            if header2 == b'B':
-                                bytes_data = self.ser.read(72)
-                                self._decode_data(bytes_data)
+                    if header1 == b'A':
+                        header2 = self.ser.read(1)
+
+                        if header2 == b'B':
+                            bytes_data = self.ser.read(72)
+                            self._decode_data(bytes_data)
+                    sleep(0.001)
+
                 else:
-                    sleep(0.08)
+                    if self.ser != None and self.ser.is_open :
+                        self.ser.close()
+                    sleep(0.05)
             except:
                 self.datahub.serial_port_error=1
 

@@ -1,19 +1,23 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect ,QTableWidget, QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QStackedWidget, QAction, qApp
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect , QPushButton,QLineEdit, QLabel, QMessageBox, QInputDialog, QCheckBox, QStackedWidget, QAction
 from PyQt5.QtCore import QThread, QUrl, QTimer, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtGui import QFont, QIcon, QPixmap
-import sys, os
+from PyQt5.QtGui import QIcon, QPixmap
 from pyqtgraph import PlotWidget, GridItem
-from numpy import empty, zeros, array, dot, cross, reshape, shape, multiply ,sin, cos, deg2rad
-from . import widgetStyle as ws
+
+from numpy import zeros, array, cross, reshape, sin, cos, deg2rad
 from numpy.random import rand
 from numpy.linalg import norm
-import pandas as pd
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.pyplot import figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+from datetime import timedelta
+from os.path import abspath, dirname, join, exists
+from sys import exit, argv
+
+from pandas import read_csv
+
+from . import widgetStyle as ws
 
 class PageWindow(QMainWindow):
     gotoSignal = pyqtSignal(str)
@@ -36,22 +40,15 @@ class GraphViewer_Thread(QThread):
         self.angle_title.setText("<b>&#8226; Angle</b>")
         self.pw_angle = PlotWidget(self.mainwindow)
         
-        
-
         self.angleSpeed_title = QLabel(self.mainwindow)
         self.angleSpeed_title.setText("<b>&#8226; Angle Speed</b>")
         self.pw_angleSpeed = PlotWidget(self.mainwindow)
         
-        
-
         self.accel_title = QLabel(self.mainwindow)
         self.accel_title.setText("<b>&#8226; Acceleration</b>")
         self.pw_accel = PlotWidget(self.mainwindow)
         
-        
-
         self.pw_angle.setGeometry(*ws.pw_angle_geometry)
-
         self.pw_angleSpeed.setGeometry(*ws.pw_angleSpeed_geometry)
         self.pw_accel.setGeometry(*ws.pw_accel_geometry)
 
@@ -98,12 +95,6 @@ class GraphViewer_Thread(QThread):
         self.curve_yaccel = self.pw_accel.plot(pen='g',name = "y acc")
         self.curve_zaccel = self.pw_accel.plot(pen='b',name ="z acc")
 
-        self.loadnum = 0
-
-        self.starttime = 0.0
-        self.starttime_count = 0
-        self.init_sec = 0
-
         self.x_ran = 500
         self.time = zeros(self.x_ran)
         self.roll = zeros(self.x_ran)
@@ -115,6 +106,8 @@ class GraphViewer_Thread(QThread):
         self.xaccel = zeros(self.x_ran)
         self.yaccel = zeros(self.x_ran)
         self.zaccel = zeros(self.x_ran)
+
+        self.starttime = 0.0
 
     def update_data(self):
         if len(self.datahub.speed) == 0:
@@ -169,11 +162,37 @@ class GraphViewer_Thread(QThread):
             self.curve_yaccel.setData(x=self.time, y=self.yaccel)
             self.curve_zaccel.setData(x=self.time, y=self.zaccel)
 
+    def graph_clear(self):
+
+        self.time = zeros(self.x_ran)
+        self.roll = zeros(self.x_ran)
+        self.pitch = zeros(self.x_ran)
+        self.yaw = zeros(self.x_ran)
+        self.rollSpeed = zeros(self.x_ran)
+        self.pitchSpeed = zeros(self.x_ran)
+        self.yawSpeed = zeros(self.x_ran)
+        self.xaccel = zeros(self.x_ran)
+        self.yaccel = zeros(self.x_ran)
+        self.zaccel = zeros(self.x_ran)
+
+        self.curve_roll.clear()
+        self.curve_pitch.clear()
+        self.curve_yaw.clear()
+
+        self.curve_rollSpeed.clear()
+        self.curve_pitchSpeed.clear()
+        self.curve_yawSpeed.clear()
+
+        self.curve_xaccel.clear()
+        self.curve_yaccel.clear()
+        self.curve_zaccel.clear()
+
+
     def on_load_finished(self):
         # to move the timer to the same thread as the QObject
         self.mytimer = QTimer(self)
         self.mytimer.timeout.connect(self.update_data)
-        self.mytimer.start(100)
+        self.mytimer.start(30)
 
     def run(self):
         self.view.loadFinished.connect(self.on_load_finished)
@@ -184,16 +203,15 @@ class MapViewer_Thread(QThread):
         super().__init__()
         self.mainwindow = mainwindow
         self.datahub= datahub
-        # self.setWindowTitle("Real-time Dynamic Map")
 
         # Create the QWebEngineView widget
         self.view = QWebEngineView(self.mainwindow)
         self.view.setGeometry(*ws.map_geometry)
         
         # Load the HTML file that contains the leaflet map
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path = os.path.join(dir_path, 'map.html')
+        path = abspath(__file__)
+        dir_path = dirname(path)
+        file_path = join(dir_path, 'map.html')
         self.view.load(QUrl.fromLocalFile(file_path))
         self.view.show()
 
@@ -262,7 +280,7 @@ class RocketViewer_Thread(QThread):
         self.view.setGeometry(*ws.model_geometry)
         
 
-        self.fig = plt.figure(facecolor='#a0a0a0')
+        self.fig = figure(facecolor='#a0a0a0')
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self.mainwindow)
         self.canvas.setGeometry(*ws.model_geometry)
@@ -278,7 +296,7 @@ class RocketViewer_Thread(QThread):
         self.ax.set_ylim([-1,1])
         self.ax.set_zlim([-1,1])
         self.ax.axis('off')
-        self.ax.quiver(0, 0, 0, self.pose[0],self.pose[1],self.pose[2],length = 1.5, lw=2, color='black')
+        self.ax.quiver(0, 0, 0, self.pose[0],self.pose[1],self.pose[2],length = 1, lw=2, color='black')
 
     def on_load_finished(self):
         self.mytimer = QTimer(self)
@@ -343,7 +361,7 @@ class RocketViewer_Thread(QThread):
             
             for i in range(5):
                 rocket_vectors = circle_vectors[:,i] + result
-                self.ax.quiver(circle_vectors[0,i],circle_vectors[1,i],circle_vectors[2,i], rocket_vectors[0], rocket_vectors[1], rocket_vectors[2], lw=1, color='black')
+                self.ax.quiver(circle_vectors[0,i],circle_vectors[1,i],circle_vectors[2,i], rocket_vectors[0], rocket_vectors[1], rocket_vectors[2], lw=0.5, color='black')
 
             self.ax.set_xlim([-1,1])
             self.ax.set_ylim([-1,1])
@@ -361,7 +379,6 @@ class MainWindow(PageWindow):
 
     def __init__(self, datahub):
         super().__init__()
-        # self.windowTitle.setStyleSheet("")
         self.datahub = datahub
 
         self.initUI()
@@ -377,13 +394,16 @@ class MainWindow(PageWindow):
         self.mapviewer.start()
         self.graphviewer.start()
         self.rocketviewer.start()
+
+        self.resetcheck = 0
         
     def initUI(self):
 
         """Set Buttons"""
         self.start_button = QPushButton("Press Start",self)
         self.stop_button = QPushButton("Stop",self)
-        self.now_status = QLabel(ws.stop_status,self)
+        self.reset_button = QPushButton("Reset",self)
+        self.now_status = QLabel(ws.wait_status,self)
         self.rf_port_edit = QLineEdit("COM8",self)
         self.port_text = QLabel("Port:",self)
         self.baudrate_edit = QLineEdit("115200",self)
@@ -392,50 +412,56 @@ class MainWindow(PageWindow):
 
         self.start_button.setFont(ws.font_start_text)
         self.stop_button.setFont(ws.font_stop_text)
+        self.reset_button.setFont(ws.font_reset_text)
         self.rf_port_edit.setStyleSheet("background-color: rgb(250,250,250);")
         self.baudrate_edit.setStyleSheet("background-color: rgb(250,250,250);")
         self.start_button.setStyleSheet("background-color: rgb(30,30,100); color: rgb(250, 250, 250);font-weight: bold;")
         self.stop_button.setStyleSheet("background-color: rgb(150,30,30); color: rgb(250, 250, 250);font-weight: bold;")
+        self.reset_button.setStyleSheet("background-color: rgb(150,30,30); color: rgb(250, 250, 250);font-weight: bold;")
 
-        shadow_start_button = QGraphicsDropShadowEffect()
-        shadow_stop_button = QGraphicsDropShadowEffect()
-        shadow_start_button.setOffset(6)
-        shadow_stop_button.setOffset(6)
-        self.start_button.setGraphicsEffect(shadow_start_button)
-        self.stop_button.setGraphicsEffect(shadow_stop_button)
+        self.shadow_start_button = QGraphicsDropShadowEffect()
+        self.shadow_stop_button = QGraphicsDropShadowEffect()
+        self.shadow_reset_button = QGraphicsDropShadowEffect()
+        self.shadow_start_button.setOffset(6)
+        self.shadow_stop_button.setOffset(0)
+        self.shadow_reset_button.setOffset(0)
+        self.start_button.setGraphicsEffect(self.shadow_start_button)
+        self.stop_button.setGraphicsEffect(self.shadow_stop_button)
+        self.reset_button.setGraphicsEffect(self.shadow_reset_button)
+
         self.baudrate_text.setFont(ws.font_baudrate)
-
         self.port_text.setFont(ws.font_portText)
         self.guide_text.setFont(ws.font_guideText)
 
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+        self.reset_button.setEnabled(False)
         self.rf_port_edit.setEnabled(True)
-        
         self.baudrate_edit.setEnabled(True)
 
         """Set Buttons Connection"""
         self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.stop_button_clicked)
+        self.reset_button.clicked.connect(self.reset_button_clicked)
 
         """Set Geometry"""
         self.start_button.setGeometry(*ws.start_geometry)
         self.stop_button.setGeometry(*ws.stop_geometry)
+        self.reset_button.setGeometry(*ws.reset_geometry)
         self.port_text.setGeometry(*ws.port_text_geometry)
         self.rf_port_edit.setGeometry(*ws.port_edit_geometry)
         self.baudrate_text.setGeometry(*ws.baudrate_text_geometry)
         self.baudrate_edit.setGeometry(*ws.baudrate_edit_geometry)
         self.guide_text.setGeometry(*ws.cmd_geometry)
-
         self.now_status.setGeometry(*ws.status_geometry)
         self.now_status.setFont(ws.font_status_text)
 
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path_logo = os.path.join(dir_path, 'logo3.png')
+        self.path = abspath(__file__)
+        self.dir_path = dirname(self.path)
+        file_path_logo = join(self.dir_path, 'team_logo.png')
 
         self.irri_logo = QLabel(self)
-        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(300, 250, Qt.KeepAspectRatio))
+        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(*ws.irri_logo_geometry[2:4], Qt.KeepAspectRatio))
         self.irri_logo.setGeometry(*ws.irri_logo_geometry)  
 
     def initMenubar(self):
@@ -503,38 +529,81 @@ class MainWindow(PageWindow):
 
     # Run when start button is clicked
     def start_button_clicked(self):
-        QMessageBox.information(self,"information","Program Start")
-        FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name',QLineEdit.Normal,"Your File Name")
-        if ok:
-            self.datahub.mySerialPort=self.rf_port_edit.text()
-            self.datahub.myBaudrate = self.baudrate_edit.text()
-            self.datahub.file_Name = FileName+'.csv'
-            self.datahub.communication_start()
-            
-            self.datahub.serial_port_error=-1
-            if self.datahub.check_communication_error():
-                QMessageBox.warning(self,"warning","Check the Port or Baudrate again.")
-                self.datahub.communication_stop()
-
+        if self.resetcheck == 0:
+            self.datahub.clear()
+            QMessageBox.information(self,"information","Program Start")
+            FileName,ok = QInputDialog.getText(self,'Input Dialog', 'Enter your File Name',QLineEdit.Normal,"Your File Name")
+            file_dir = dirname(self.dir_path)
+            file_path = join(file_dir,FileName)+".csv"
+            if exists(file_path):
+                QMessageBox.information(self,"information","Same file already exist")
             else:
-                self.datahub.datasaver_start()
-                self.now_status.setText(ws.start_status)
-                self.start_button.setEnabled(False)
-                self.stop_button.setEnabled(True)
-                self.rf_port_edit.setEnabled(False)
-                self.baudrate_edit.setEnabled(False)
-        self.datahub.serial_port_error=-1
-    
+                if ok:
+                    self.datahub.mySerialPort=self.rf_port_edit.text()
+                    self.datahub.myBaudrate = self.baudrate_edit.text()
+                    self.datahub.file_Name = FileName+'.csv'
+                    self.datahub.communication_start()
+                    
+                    self.datahub.serial_port_error=-1
+                    if self.datahub.check_communication_error():
+                        QMessageBox.warning(self,"warning","Check the Port or Baudrate again.")
+                        self.datahub.communication_stop()
+                    else:
+                        self.datahub.datasaver_start()
+                        self.now_status.setText(ws.start_status)
+                        self.start_button.setEnabled(False)
+                        self.stop_button.setEnabled(True)
+                        self.rf_port_edit.setEnabled(False)
+                        self.baudrate_edit.setEnabled(False)
+                        self.shadow_start_button.setOffset(0)
+                        self.shadow_stop_button.setOffset(6)
+                        self.shadow_reset_button.setOffset(6)
+                self.datahub.serial_port_error=-1
+        else:
+            self.datahub.communication_start()
+            self.datahub.serial_port_error=-1
+            self.now_status.setText(ws.start_status)
+            self.start_button.setEnabled(False)
+            self.stop_button.setEnabled(True)
+            self.rf_port_edit.setEnabled(False)
+            self.baudrate_edit.setEnabled(False)
+            self.shadow_start_button.setOffset(0)
+            self.shadow_stop_button.setOffset(6)
+            self.shadow_reset_button.setOffset(6)
+            self.resetcheck = 0  
+
     # Run when stop button is clicked
     def stop_button_clicked(self):
-        QMessageBox.information(self,"information","Program Stop")
         self.datahub.communication_stop()
-        self.datahub.datasaver_stop()
         self.now_status.setText(ws.stop_status)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        self.rf_port_edit.setEnabled(False)     
-        self.result_window()
+        self.reset_button.setEnabled(True)
+        self.rf_port_edit.setEnabled(False)
+        self.shadow_start_button.setOffset(6)
+        self.shadow_stop_button.setOffset(0)
+        self.shadow_reset_button.setOffset(6)
+        self.resetcheck = 1
+
+    def reset_button_clicked(self):
+        request = QMessageBox.question(self,'Message', 'Are you sure to reset?')
+        if request == QMessageBox.Yes:
+            QMessageBox.information(self,"information","Program Reset")
+            self.datahub.communication_stop()
+            self.datahub.datasaver_stop()
+            self.now_status.setText(ws.wait_status)
+            self.start_button.setEnabled(True)
+            self.stop_button.setEnabled(False)
+            self.reset_button.setEnabled(False)
+            self.rf_port_edit.setEnabled(False)
+            self.shadow_start_button.setOffset(6)
+            self.shadow_stop_button.setOffset(0)
+            self.shadow_reset_button.setOffset(0)
+            self.graphviewer.graph_clear()
+            self.datahub.clear()
+            self.resetcheck = 0
+        else:
+            QMessageBox.information(self,"information","Cancel")
 
     #curve hide check box is clicked
     def roll_hide_checkbox_state(self,state):
@@ -556,32 +625,6 @@ class MainWindow(PageWindow):
     def zacc_hide_checkbox_state(self,state):
         self.graphviewer.curve_zaccel.setVisible(state != Qt.Checked)
 
-    #plot result(for now,Altitude)
-    def result_window(self):
-        if len(self.datahub.speed) == 0:
-            pass
-        else:
-            self.resultwindow = QMainWindow()
-            self.resultwindow.resize(440,440)
-            self.pw_altitude = PlotWidget(self.resultwindow)
-            self.pw_altitude.getPlotItem().getAxis('bottom').setLabel('Time(second)')
-            self.pw_altitude.getPlotItem().getAxis('left').setLabel('Altitude(m)')
-            self.pw_altitude.getPlotItem().addLegend()
-            self.pw_altitude.setYRange(-5,300)
-            self.pw_altitude_timeline = self.datahub.hours * 3600 + self.datahub.mins * 60 + self.datahub.secs + self.datahub.tenmilis*0.01 
-            self.pw_altitude_timeline -= self.pw_altitude_timeline[0]   
-            self.pw_altitude.plot(self.pw_altitude_timeline,self.datahub.altitude-self.datahub.altitude[-1] ,pen = "r", name = "Altitude")
-            self.pw_altitude.setGeometry(20,20,400,400)
-
-
-            self.resultwindow.show()
-
-    # Run when mainwindow is closed
-    def closeEvent(self, event):
-        self.datahub.communication_stop()
-        self.datahub.datasaver_stop()
-        event.accept()
-
 #  Analysis1
 class SubWindow(PageWindow):
     def __init__(self,datahub):
@@ -601,30 +644,28 @@ class SubWindow(PageWindow):
         self.max_speed_label = QLabel("Max. speed",self)
         self.max_accel_label = QLabel("Max. acceleration", self)
 
-        self.max_altitude_label.setStyleSheet("font-weight: bold;")
-        self.max_speed_label.setStyleSheet("font-weight: bold;")
-        self.max_accel_label.setStyleSheet("font-weight: bold;")
-
         self.max_altitude = QLabel("0 ",self)
         self.max_speed = QLabel("0 ",self)
         self.max_accel = QLabel("0 ", self)
 
+        self.max_altitude_label.setStyleSheet("font-weight: bold;")
+        self.max_speed_label.setStyleSheet("font-weight: bold;")
+        self.max_accel_label.setStyleSheet("font-weight: bold;")
         self.max_altitude.setStyleSheet("font-weight: bold;")
         self.max_speed.setStyleSheet("font-weight: bold;")
         self.max_accel.setStyleSheet("font-weight: bold;")
         self.analysis_button.setStyleSheet("font-weight: bold;")
         self.analysis_angular_button.setStyleSheet("font-weight: bold;")
         self.analysis_alnsp_button.setStyleSheet("font-weight: bold;")
+        self.csv_name_edit.setStyleSheet("background-color: rgb(250,250,250);")
 
         self.csv_name_edit.setGeometry(*ws.csv_name_geometry)
         self.analysis_button.setGeometry(*ws.analysis_button_geometry)
         self.analysis_angular_button.setGeometry(*ws.analysis_angular_button_geometry)
         self.analysis_alnsp_button.setGeometry(*ws.analysis_alnsp_button_geometry)
-
         self.max_altitude_label.setGeometry(*ws.max_altitude_label_geometry)
         self.max_speed_label.setGeometry(*ws.max_speed_label_geometry)
         self.max_accel_label.setGeometry(*ws.max_accel_label_geometry)
-
         self.max_altitude.setGeometry(*ws.max_altitude_geometry)
         self.max_speed.setGeometry(*ws.max_speed_geometry)
         self.max_accel.setGeometry(*ws.max_accel_geometry)
@@ -632,23 +673,20 @@ class SubWindow(PageWindow):
         self.max_altitude_label.setFont(ws.font_max_alti_label_text)
         self.max_speed_label.setFont(ws.font_max_speed_label_text)
         self.max_accel_label.setFont(ws.font_max_accel_label_text)
-
         self.max_altitude.setFont(ws.font_max_alti_text)
         self.max_speed.setFont(ws.font_max_speed_text)
         self.max_accel.setFont(ws.font_max_accel_text)
-
-        self.csv_name_edit.setStyleSheet("background-color: rgb(250,250,250);")
 
         self.analysis_button.clicked.connect(self.start_analysis)
         self.analysis_angular_button.clicked.connect(self.start_angularGraph)
         self.analysis_alnsp_button.clicked.connect(self.start_alnspGraph)
 
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path_logo = os.path.join(dir_path, 'logo3.png')
+        path = abspath(__file__)
+        dir_path = dirname(path)
+        file_path_logo = join(dir_path, 'team_logo.png')
 
         self.irri_logo = QLabel(self)
-        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(300, 250, Qt.KeepAspectRatio))
+        self.irri_logo.setPixmap(QPixmap(file_path_logo).scaled(*ws.irri_logo_geometry[2:4], Qt.KeepAspectRatio))
         self.irri_logo.setGeometry(*ws.irri_logo_geometry)  
 
     def initGraph(self):
@@ -743,56 +781,57 @@ class SubWindow(PageWindow):
 
     def start_analysis(self):
         self.csv_name = self.csv_name_edit.text()
-        try:
-            alldata = pd.read_csv(self.csv_name).to_numpy()
-            init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
-            timespace = alldata[:,0]*3600+alldata[:,1]*60+alldata[:,2]+alldata[:,3]*0.01 - init_time
-            roll = alldata[:,4]
-            pitch = alldata[:,5]
-            yaw = alldata[:,6]
+        # try:
+        alldata = read_csv(self.csv_name).to_numpy()
+        init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
+        timespace = alldata[:,0]*3600+alldata[:,1]*60+alldata[:,2]+alldata[:,3]*0.01 - init_time
 
-            rollSpeed = alldata[:,7]
-            pitchSpeed = alldata[:,8]
-            yawSpeed = alldata[:,9]
+        roll = alldata[:,4]
+        pitch = alldata[:,5]
+        yaw = alldata[:,6]
 
-            xaccel = alldata[:,10]
-            yaccel = alldata[:,11]
-            zaccel = alldata[:,12]
-            altitude = alldata[:,15]
-            speed = alldata[:,16]
+        rollSpeed = alldata[:,7]
+        pitchSpeed = alldata[:,8]
+        yawSpeed = alldata[:,9]
 
-            self.curve_roll.setData(x=timespace,y=roll)
-            self.curve_pitch.setData(x=timespace,y=pitch)
-            self.curve_yaw.setData(x=timespace,y=yaw)
+        xaccel = alldata[:,10]
+        yaccel = alldata[:,11]
+        zaccel = alldata[:,12]
+        altitude = alldata[:,15]
+        speed = alldata[:,16]
 
-            self.curve_rollSpeed.setData(x=timespace,y=rollSpeed)
-            self.curve_pitchSpeed.setData(x=timespace,y=pitchSpeed)
-            self.curve_yawSpeed.setData(x=timespace,y=yawSpeed)
+        self.curve_roll.setData(x=timespace,y=roll)
+        self.curve_pitch.setData(x=timespace,y=pitch)
+        self.curve_yaw.setData(x=timespace,y=yaw)
 
-            self.curve_xaccel.setData(x=timespace,y=xaccel)
-            self.curve_yaccel.setData(x=timespace,y=yaccel)
-            self.curve_zaccel.setData(x=timespace,y=zaccel)
+        self.curve_rollSpeed.setData(x=timespace,y=rollSpeed)
+        self.curve_pitchSpeed.setData(x=timespace,y=pitchSpeed)
+        self.curve_yawSpeed.setData(x=timespace,y=yawSpeed)
 
-            self.curve_altitude.setData(x=timespace,y=altitude)
+        self.curve_xaccel.setData(x=timespace,y=xaccel)
+        self.curve_yaccel.setData(x=timespace,y=yaccel)
+        self.curve_zaccel.setData(x=timespace,y=zaccel)
 
-            self.curve_speed.setData(x=timespace,y=speed)
+        self.curve_altitude.setData(x=timespace,y=altitude)
 
-            total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
-            self.max_altitude.setText("{:.2f} m".format(max(altitude)))
-            self.max_speed.setText("{:.2f} m/s".format(max(speed)))
-            self.max_accel.setText("{:.2f} g".format(max(total_accel)))
+        self.curve_speed.setData(x=timespace,y=speed)
 
-            self.start_angularGraph()
+        total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
+        self.max_altitude.setText("{:.2f} m".format(max(altitude)))
+        self.max_speed.setText("{:.2f} m/s".format(max(speed)))
+        self.max_accel.setText("{:.2f} g".format(max(total_accel)))
 
-        except:
-            QMessageBox.warning(self,"warning","File open error")
+        self.start_angularGraph()
+
+        # except:
+        #     QMessageBox.warning(self,"warning","File open error")
 
     def gomain(self):
         self.goto("main")
 
 class window(QMainWindow):
     def __init__(self,datahub):
-        self.app = QApplication(sys.argv)
+        self.app = QApplication(argv)
         super().__init__()
         self.datahub = datahub
 
@@ -805,9 +844,9 @@ class window(QMainWindow):
         self.setWindowTitle('I-link')
         self.setStyleSheet(ws.mainwindow_color) 
 
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        file_path = os.path.join(dir_path, 'logo.ico')
+        path = abspath(__file__)
+        dir_path = dirname(path)
+        file_path = join(dir_path, 'window_logo.ico')
         self.setWindowIcon(QIcon(file_path))
 
 
@@ -836,7 +875,7 @@ class window(QMainWindow):
         self.show()
         
     def setEventLoop(self):
-        sys.exit(self.app.exec_())
+        exit(self.app.exec_())
 
     def closeEvent(self, event):
         self.datahub.communication_stop()

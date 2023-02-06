@@ -50,7 +50,8 @@ baudrate_edit_geometry = np.array([a*0.46,  a*0.28+b*0.132,  a*0.06, a*0.01125])
 
 # start/stop button geometry
 start_geometry = np.array([a*0.41,  0.132*b+0.3*a,  0.12*a,  0.12*a ]).astype(int)
-stop_geometry = np.array([a*0.56, a*0.27+b*0.132, 0.15*a, 0.15*a]).astype(int)
+stop_geometry = np.array([a*0.56, a*0.265+b*0.132, 0.15*a, 0.07*a]).astype(int)
+reset_geometry = np.array([a*0.56, a*0.35+b*0.132, 0.15*a, 0.07*a]).astype(int)
 status_geometry = np.array([a*0.41,  0.14*b+0.42*a, 0.3*a, 35]).astype(int)
 
 # 
@@ -62,7 +63,6 @@ cmd_geometry = np.array([a*0.74, 0.24*a+0.132*b,  a*0.22,  0.17*a]).astype(int)
 
 # 
 irri_logo_geometry = np.array([a*0.83, 0.89*b,  a*0.15,  0.1*b]).astype(int)
-
 
 # all fonts
 font_portText = QFont()
@@ -92,14 +92,20 @@ font_start_text.setPointSize(20)
 font_stop_text = QFont()
 font_stop_text.setPointSize(20)
 
+font_reset_text = QFont()
+font_reset_text.setPointSize(20)
+
 font_status_text = QFont()
-font_status_text.setPointSize(11)
+font_status_text.setPointSize(12)
 
 font_speed_text = QFont()
 font_speed_text.setPointSize(16)
 
-start_status = 'Program start. you can push the stop button'
-stop_status = 'Program stop. you can push the start button'
+
+
+start_status = 'Program start.'
+stop_status = 'Program stop.'
+wait_status = 'Wait for start'
 
 guide = """
 1. Enter your serial port in the text box\n

@@ -110,6 +110,7 @@ class ImuRead:
         
         self.ser_rf.write(packed_bytes)
         self.n+=1
+        print(self.status)
         # time.sleep(0.01)
 
 
