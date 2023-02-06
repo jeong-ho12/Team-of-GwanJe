@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsDropShadowEffect
 from PyQt5.QtCore import QThread, QUrl, QTimer, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QIcon, QPixmap
-from pyqtgraph import PlotWidget, GridItem
+from pyqtgraph import PlotWidget, GridItem, AxisItem
 
 from numpy import zeros, array, cross, reshape, sin, cos, deg2rad
 from numpy.random import rand
@@ -625,12 +625,23 @@ class MainWindow(PageWindow):
     def zacc_hide_checkbox_state(self,state):
         self.graphviewer.curve_zaccel.setVisible(state != Qt.Checked)
 
+
+class TimeAxisItem(AxisItem):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setLabel(text='Time', units=None)
+        self.enableAutoSIPrefix(False)
+
+    def tickStrings(self, values, scale, spacing):
+        return [str(timedelta(milliseconds = millis))[:-4] for millis in values]
+
 #  Analysis1
 class SubWindow(PageWindow):
     def __init__(self,datahub):
         super().__init__()
         
         self.datahub = datahub
+        self.timespace = None
         self.initUI()
         self.initGraph()
         self.initMenubar()
@@ -640,6 +651,7 @@ class SubWindow(PageWindow):
         self.analysis_button = QPushButton("Analysis", self)
         self.analysis_angular_button = QPushButton("Angular Data Analysis", self)
         self.analysis_alnsp_button = QPushButton("Altitude & Speed Analysis", self)
+        self.set_range_button = QPushButton("Reset range", self)
         self.max_altitude_label = QLabel("Max. altitude",self)
         self.max_speed_label = QLabel("Max. speed",self)
         self.max_accel_label = QLabel("Max. acceleration", self)
@@ -657,18 +669,21 @@ class SubWindow(PageWindow):
         self.analysis_button.setStyleSheet("font-weight: bold;")
         self.analysis_angular_button.setStyleSheet("font-weight: bold;")
         self.analysis_alnsp_button.setStyleSheet("font-weight: bold;")
+        self.set_range_button.setStyleSheet("font-weight: bold;")
         self.csv_name_edit.setStyleSheet("background-color: rgb(250,250,250);")
 
         self.csv_name_edit.setGeometry(*ws.csv_name_geometry)
         self.analysis_button.setGeometry(*ws.analysis_button_geometry)
         self.analysis_angular_button.setGeometry(*ws.analysis_angular_button_geometry)
         self.analysis_alnsp_button.setGeometry(*ws.analysis_alnsp_button_geometry)
+        self.set_range_button.setGeometry(*ws.set_range_geometry)
         self.max_altitude_label.setGeometry(*ws.max_altitude_label_geometry)
         self.max_speed_label.setGeometry(*ws.max_speed_label_geometry)
         self.max_accel_label.setGeometry(*ws.max_accel_label_geometry)
         self.max_altitude.setGeometry(*ws.max_altitude_geometry)
         self.max_speed.setGeometry(*ws.max_speed_geometry)
         self.max_accel.setGeometry(*ws.max_accel_geometry)
+        
 
         self.max_altitude_label.setFont(ws.font_max_alti_label_text)
         self.max_speed_label.setFont(ws.font_max_speed_label_text)
@@ -680,6 +695,7 @@ class SubWindow(PageWindow):
         self.analysis_button.clicked.connect(self.start_analysis)
         self.analysis_angular_button.clicked.connect(self.start_angularGraph)
         self.analysis_alnsp_button.clicked.connect(self.start_alnspGraph)
+        self.set_range_button.clicked.connect(self.reset_range)
 
         path = abspath(__file__)
         dir_path = dirname(path)
@@ -690,11 +706,11 @@ class SubWindow(PageWindow):
         self.irri_logo.setGeometry(*ws.irri_logo_geometry)  
 
     def initGraph(self):
-        self.gr_angle = PlotWidget(self)
-        self.gr_angleSpeed = PlotWidget(self)
-        self.gr_accel = PlotWidget(self)
-        self.gr_altitude = PlotWidget(self)
-        self.gr_speed = PlotWidget(self)
+        self.gr_angle = PlotWidget(self, axisItems={'bottom': TimeAxisItem(orientation='bottom')})
+        self.gr_angleSpeed = PlotWidget(self, axisItems={'bottom': TimeAxisItem(orientation='bottom')})
+        self.gr_accel = PlotWidget(self, axisItems={'bottom': TimeAxisItem(orientation='bottom')})
+        self.gr_altitude = PlotWidget(self, axisItems={'bottom': TimeAxisItem(orientation='bottom')})
+        self.gr_speed = PlotWidget(self, axisItems={'bottom': TimeAxisItem(orientation='bottom')})
 
         self.gr_angle.setGeometry(*ws.gr_angle_geometry)
         self.gr_angleSpeed.setGeometry(*ws.gr_angleSpeed_geometry)
@@ -708,15 +724,10 @@ class SubWindow(PageWindow):
         self.gr_altitude.addItem(GridItem())
         self.gr_speed.addItem(GridItem())
 
-        self.gr_angle.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_angle.getPlotItem().getAxis('left').setLabel('Degree')
-        self.gr_angleSpeed.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_angleSpeed.getPlotItem().getAxis('left').setLabel('Degree/second')
-        self.gr_accel.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_accel.getPlotItem().getAxis('left').setLabel('g(gravity accel)')
-        self.gr_altitude.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_altitude.getPlotItem().getAxis('left').setLabel('Altitude')
-        self.gr_speed.getPlotItem().getAxis('bottom').setLabel('Time(second)')
         self.gr_speed.getPlotItem().getAxis('left').setLabel('Speed')
 
         self.gr_angle.getPlotItem().addLegend()
@@ -784,7 +795,7 @@ class SubWindow(PageWindow):
         # try:
         alldata = read_csv(self.csv_name).to_numpy()
         init_time = alldata[0,0]*3600+alldata[0,1]*60+alldata[0,2]+alldata[0,3]*0.01
-        timespace = alldata[:,0]*3600+alldata[:,1]*60+alldata[:,2]+alldata[:,3]*0.01 - init_time
+        self.timespace = alldata[:,0]*3600000+alldata[:,1]*60000+alldata[:,2]*1000+alldata[:,3]*10
 
         roll = alldata[:,4]
         pitch = alldata[:,5]
@@ -800,21 +811,21 @@ class SubWindow(PageWindow):
         altitude = alldata[:,15]
         speed = alldata[:,16]
 
-        self.curve_roll.setData(x=timespace,y=roll)
-        self.curve_pitch.setData(x=timespace,y=pitch)
-        self.curve_yaw.setData(x=timespace,y=yaw)
+        self.curve_roll.setData(x=self.timespace,y=roll)
+        self.curve_pitch.setData(x=self.timespace,y=pitch)
+        self.curve_yaw.setData(x=self.timespace,y=yaw)
 
-        self.curve_rollSpeed.setData(x=timespace,y=rollSpeed)
-        self.curve_pitchSpeed.setData(x=timespace,y=pitchSpeed)
-        self.curve_yawSpeed.setData(x=timespace,y=yawSpeed)
+        self.curve_rollSpeed.setData(x=self.timespace,y=rollSpeed)
+        self.curve_pitchSpeed.setData(x=self.timespace,y=pitchSpeed)
+        self.curve_yawSpeed.setData(x=self.timespace,y=yawSpeed)
 
-        self.curve_xaccel.setData(x=timespace,y=xaccel)
-        self.curve_yaccel.setData(x=timespace,y=yaccel)
-        self.curve_zaccel.setData(x=timespace,y=zaccel)
+        self.curve_xaccel.setData(x=self.timespace,y=xaccel)
+        self.curve_yaccel.setData(x=self.timespace,y=yaccel)
+        self.curve_zaccel.setData(x=self.timespace,y=zaccel)
 
-        self.curve_altitude.setData(x=timespace,y=altitude)
+        self.curve_altitude.setData(x=self.timespace,y=altitude)
 
-        self.curve_speed.setData(x=timespace,y=speed)
+        self.curve_speed.setData(x=self.timespace,y=speed)
 
         total_accel = (xaccel**2+yaccel**2+zaccel**2)**(0.5)
         self.max_altitude.setText("{:.2f} m".format(max(altitude)))
@@ -828,6 +839,14 @@ class SubWindow(PageWindow):
 
     def gomain(self):
         self.goto("main")
+
+    def reset_range(self):
+        if self.timespace is not None:
+            self.gr_angle.setXRange(min(self.timespace),max(self.timespace))
+            self.gr_angleSpeed.setXRange(min(self.timespace),max(self.timespace))
+            self.gr_accel.setXRange(min(self.timespace),max(self.timespace))
+            self.gr_speed.setXRange(min(self.timespace),max(self.timespace))
+            self.gr_altitude.setXRange(min(self.timespace),max(self.timespace))
 
 class window(QMainWindow):
     def __init__(self,datahub):

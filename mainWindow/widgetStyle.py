@@ -123,6 +123,7 @@ csv_name_geometry = np.array([a*0.8, 0.8*b,  a*0.1, a*0.02]).astype(int)
 analysis_button_geometry = np.array([a*0.8, 0.85*b,  a*0.1, a*0.02]).astype(int)
 analysis_angular_button_geometry = np.array([a*0.73, 0.7*b, a*0.10, a*0.02]).astype(int)
 analysis_alnsp_button_geometry = np.array([a*0.87, 0.7*b, a*0.10, a*0.02]).astype(int)
+set_range_geometry = np.array([a*0.8, 0.55*b,  a*0.1, a*0.02]).astype(int)
 
 gr_angle_geometry = np.array([a*0.1,  b*0.04,  a*0.6,  b*0.28]).astype(int)
 gr_angleSpeed_geometry = np.array([a*0.1,  b*0.36,  a*0.6,  b*0.28]).astype(int)
@@ -135,6 +136,8 @@ max_accel_label_geometry = np.array([a*0.75,  b*0.15+100,  300, 50]).astype(int)
 max_altitude_geometry = np.array([a*0.75+200,  b*0.15,  300, 50]).astype(int)
 max_speed_geometry = np.array([a*0.75+200,  b*0.15+50,  300, 50]).astype(int)
 max_accel_geometry = np.array([a*0.75+200,  b*0.15+100,  300, 50]).astype(int)
+
+
 
 font_max_alti_label_text = QFont()
 font_max_alti_label_text.setPointSize(15)
